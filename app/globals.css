@@ -4,6 +4,7 @@
 @import "../styles/Timeline.css";
 @import "../styles/Tag.css";
 @import "../styles/easter-eggs.css";
+@import "../styles/Admin.css";
 
 :root {
   --text: #6b6375;

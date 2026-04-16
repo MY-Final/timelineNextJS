@@ -14,16 +14,14 @@ interface TimelineEventData {
   title: string;
   description: string;
   location: string;
-  images: string[];
+  images: { id: number; post_id: number; url: string; order: number }[];
   tags: string[];
 }
 
-const EVENTS: TimelineEventData[] = eventsJson.map((event) => ({
+const STATIC_EVENTS: TimelineEventData[] = eventsJson.map((event) => ({
   ...event,
-  images: getImagesByDate(event.date),
+  images: getImagesByDate(event.date).map((url, i) => ({ id: i, post_id: event.id, url, order: i })),
 }));
-
-const allTags = [...new Set(EVENTS.flatMap((event) => event.tags))];
 
 function FloatingDots() {
   return (
@@ -37,11 +35,12 @@ function FloatingDots() {
   );
 }
 
-function PhotoCarousel({ images }: { images: string[] }) {
+function PhotoCarousel({ images }: { images: { url: string }[] | string[] }) {
+  const urls = images.map((img) => (typeof img === "string" ? img : img.url));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const count = images.length;
+  const count = urls.length;
 
   useEffect(() => {
     if (count <= 1 || isHovered) return;
@@ -63,7 +62,7 @@ function PhotoCarousel({ images }: { images: string[] }) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {images.map((src, i) => (
+        {urls.map((src, i) => (
           <img
             key={src}
             src={src}
@@ -97,7 +96,7 @@ function PhotoCarousel({ images }: { images: string[] }) {
               ›
             </button>
             <div className="tag-carousel-indicators">
-              {images.map((_, i) => (
+              {urls.map((_, i) => (
                 <button
                   key={i}
                   className={`tag-carousel-dot ${i === currentIndex ? "active" : ""}`}
@@ -115,7 +114,7 @@ function PhotoCarousel({ images }: { images: string[] }) {
 
       {lightboxIndex !== null && (
         <ImageLightbox
-          images={images}
+          images={urls}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onPrev={() => setLightboxIndex((lightboxIndex - 1 + count) % count)}
@@ -197,11 +196,21 @@ const EventCard = memo(function EventCard({ event }: { event: TimelineEventData 
 
 export default function TagPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [events, setEvents] = useState<TimelineEventData[]>(STATIC_EVENTS);
+
+  useEffect(() => {
+    fetch("/api/posts")
+      .then((r) => r.json() as Promise<TimelineEventData[]>)
+      .then((data: TimelineEventData[]) => setEvents(data))
+      .catch(() => { /* keep static fallback */ });
+  }, []);
+
+  const allTags = useMemo(() => [...new Set(events.flatMap((e) => e.tags))], [events]);
 
   const filteredEvents = useMemo(() => {
-    if (selectedTags.length === 0) return EVENTS;
-    return EVENTS.filter((event) => selectedTags.some((tag) => event.tags.includes(tag)));
-  }, [selectedTags]);
+    if (selectedTags.length === 0) return events;
+    return events.filter((event) => selectedTags.some((tag) => event.tags.includes(tag)));
+  }, [selectedTags, events]);
 
   return (
     <div className="tag-shell">

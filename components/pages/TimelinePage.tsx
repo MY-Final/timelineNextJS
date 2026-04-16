@@ -4,10 +4,15 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUp, ArrowUpDown, Calendar, Heart, Tag } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/common/ImageLightbox";
-import eventsJson from "@/data/events.json";
 import { useFloatingHearts, useMouseTrail, useSecretClick } from "@/lib/easter-eggs";
 import { getCardTransform } from "@/lib/gallery";
-import { getImagesByDate } from "@/lib/images";
+
+interface TimelineImage {
+  id: number;
+  post_id: number;
+  url: string;
+  order: number;
+}
 
 interface TimelineEventData {
   id: number;
@@ -15,14 +20,9 @@ interface TimelineEventData {
   title: string;
   description: string;
   location: string;
-  images: string[];
+  images: TimelineImage[];
   tags: string[];
 }
-
-const EVENTS: TimelineEventData[] = eventsJson.map((event) => ({
-  ...event,
-  images: getImagesByDate(event.date),
-}));
 
 function useScrollReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -75,12 +75,13 @@ const PhotoGallery = memo(function PhotoGallery({
   images,
   isActive,
 }: {
-  images: string[];
+  images: string[] | TimelineImage[];
   isActive: boolean;
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const count = images.length;
+  const urls: string[] = images.map((img) => (typeof img === "string" ? img : img.url));
+  const count = urls.length;
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -89,7 +90,7 @@ const PhotoGallery = memo(function PhotoGallery({
   return (
     <>
       <div className={`fan-gallery ${isActive ? "fan-active" : "fan-inactive"}`}>
-        {images.map((src, i) => (
+        {urls.map((src, i) => (
           <div
             key={src}
             className={`fan-card ${hovered === i && isActive ? "fan-hovered" : ""} ${
@@ -122,7 +123,7 @@ const PhotoGallery = memo(function PhotoGallery({
 
       {lightboxIndex !== null && (
         <ImageLightbox
-          images={images}
+          images={urls}
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onPrev={() => setLightboxIndex((lightboxIndex - 1 + count) % count)}
@@ -271,17 +272,33 @@ export default function TimelinePage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [ascending, setAscending] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [events, setEvents] = useState<TimelineEventData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { active: secretMode, click: secretClick } = useSecretClick(7, 500);
 
   useMouseTrail();
 
-  const sortedEvents = useMemo(() => (ascending ? [...EVENTS] : [...EVENTS].reverse()), [ascending]);
+  useEffect(() => {
+    fetch("/api/posts")
+      .then((r) => r.json() as Promise<TimelineEventData[]>)
+      .then((data: TimelineEventData[]) => {
+        setEvents(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setFetchError("加载失败，请刷新重试");
+        setLoading(false);
+      });
+  }, []);
+
+  const sortedEvents = useMemo(() => (ascending ? [...events] : [...events].reverse()), [ascending, events]);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isScrollingManually = useRef(false);
   const activeIndexRef = useRef(0);
 
   const today = new Date().toISOString().slice(0, 10);
-  const isSpecialDay = EVENTS.some((event) => event.date === today);
+  const isSpecialDay = events.some((event) => event.date === today);
 
   const scrollToSection = useCallback((index: number) => {
     const el = sectionRefs.current[index];
@@ -349,6 +366,16 @@ export default function TimelinePage() {
   return (
     <div className={`app-shell ${secretMode ? "secret-mode" : ""} ${isSpecialDay ? "special-day" : ""}`}>
       <FloatingDots />
+      {loading && (
+        <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, background: "rgba(255,255,255,0.7)" }}>
+          <span style={{ fontFamily: "var(--font-serif-cn)", fontSize: "1.2rem", color: "#fb7185" }}>加载中…</span>
+        </div>
+      )}
+      {fetchError && (
+        <div style={{ position: "fixed", top: "1rem", left: "50%", transform: "translateX(-50%)", background: "#fee2e2", color: "#dc2626", padding: "0.5rem 1rem", borderRadius: "0.5rem", zIndex: 50 }}>
+          {fetchError}
+        </div>
+      )}
 
       <header className="hero">
         <Link href="/" className="hero-nav-btn hero-back" aria-label="返回首页">

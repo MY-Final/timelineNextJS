@@ -1,0 +1,13 @@
+name = "timeline"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".open-next"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "timeline-db"
+database_id = "244bffe6-e8dd-4e52-9469-81137071444f"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "timeline"
