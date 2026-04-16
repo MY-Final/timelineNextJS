@@ -14,6 +14,7 @@ import {
 } from "@/lib/easter-eggs";
 
 const LOVE_START_DATE = new Date("2026-03-08T18:35:00");
+const LOVE_START_DATE_LABEL = "2026年3月8日";
 const PERSON_A = "阳阳";
 const PERSON_B = "湘湘";
 
@@ -40,9 +41,15 @@ function useLoveTimer(startDate: Date): TimerValue {
     };
   }, [startDate]);
 
-  const [value, setValue] = useState<TimerValue>(calc);
+  const [value, setValue] = useState<TimerValue>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
   useEffect(() => {
+    setValue(calc());
     const id = window.setInterval(() => setValue(calc()), 1000);
     return () => window.clearInterval(id);
   }, [calc]);
@@ -97,13 +104,11 @@ export default function HomePage() {
     inputProgress,
     target,
   } = useILoveYou();
-  const anniversaryToday = isAnniversary(LOVE_START_DATE);
+  const [anniversaryToday, setAnniversaryToday] = useState(false);
 
-  const startDateStr = LOVE_START_DATE.toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  useEffect(() => {
+    setAnniversaryToday(isAnniversary(LOVE_START_DATE));
+  }, []);
 
   return (
     <main
@@ -120,7 +125,7 @@ export default function HomePage() {
       <div className="home-top">
         <div className="date-badge">
           <div className="date-badge-line" />
-          <p className="date-badge-text">Since {startDateStr}</p>
+          <p className="date-badge-text">Since {LOVE_START_DATE_LABEL}</p>
         </div>
       </div>
 

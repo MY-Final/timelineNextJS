@@ -846,8 +846,99 @@
 
 /* ---------- Navigation buttons fixed positioning ---------- */
 .hero-nav-btn {
+  position: absolute;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: #e2a0b0;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.25s ease, transform 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   position: fixed !important;
   z-index: 100;
+}
+
+.hero-nav-btn::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #e2a0b0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.25s ease;
+}
+
+.hero-nav-btn:hover::after,
+.hero-nav-btn:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.hero-nav-btn:hover,
+.hero-nav-btn:focus-visible {
+  background: none !important;
+  color: #fb7185;
+  transform: translateY(-2px);
+}
+
+.hero-nav-btn:focus {
+  outline: none;
+}
+
+@media (hover: none) {
+  .hero-nav-btn:hover {
+    color: #e2a0b0;
+    transform: none;
+  }
+
+  .hero-nav-btn:hover::after {
+    transform: scaleX(0);
+  }
+
+  .hero-nav-btn:active {
+    color: #fb7185;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .hero-nav-btn {
+    color: #9a6075;
+  }
+
+  .hero-nav-btn::after {
+    background: #9a6075;
+  }
+
+  .hero-nav-btn:hover,
+  .hero-nav-btn:focus-visible {
+    color: #fb7185;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-nav-btn {
+    transition: none;
+    transform: none !important;
+  }
+
+  .hero-nav-btn::after {
+    transition: none;
+  }
 }
 
 .hero-back      { top: 24px; left: 28px; }
