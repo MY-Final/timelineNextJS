@@ -21,6 +21,9 @@
 /build
 /.open-next
 
+# wrangler local dev state
+/.wrangler
+
 # misc
 .DS_Store
 *.pem
