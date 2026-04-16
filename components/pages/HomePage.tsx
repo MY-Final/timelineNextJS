@@ -69,12 +69,7 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
           {src ? (
             <img src={src} alt={`${name}的头像`} />
           ) : (
-            <User
-              className="avatar-placeholder-icon"
-              size={44}
-              strokeWidth={1.2}
-              aria-hidden="true"
-            />
+            <User className="avatar-placeholder-icon" size={44} strokeWidth={1.2} aria-hidden="true" />
           )}
         </div>
       </div>
@@ -87,23 +82,14 @@ export default function HomePage() {
   const { days, hours, minutes, seconds } = useLoveTimer(LOVE_START_DATE);
   const { hearts, spawn: spawnHearts } = useFloatingHearts(12);
   const { active: secretMode, click: handleSecretClick } = useSecretClick(10, 400);
-  const {
-    active: konamiMode,
-    progress: konamiProgress,
-    sequence: konamiSequence,
-  } = useKonamiCode();
+  const { active: konamiMode, progress: konamiProgress, sequence: konamiSequence } = useKonamiCode();
   const {
     progress: holdProgress,
     active: loveMode,
     start: handleHeartHoldStart,
     end: handleHeartHoldEnd,
   } = useLongPress(2000);
-  const {
-    active: iLoveYouActive,
-    stage: iLoveYouStage,
-    inputProgress,
-    target,
-  } = useILoveYou();
+  const { active: iLoveYouActive, stage: iLoveYouStage, inputProgress, target } = useILoveYou();
   const [anniversaryToday, setAnniversaryToday] = useState(false);
 
   useEffect(() => {
@@ -157,11 +143,11 @@ export default function HomePage() {
               <div className="heart-hold-progress" style={{ width: `${holdProgress}%` }} />
             )}
 
-            {hearts.map((h) => (
+            {hearts.map((heart) => (
               <span
-                key={h.id}
+                key={heart.id}
                 className="floating-heart-fullscreen"
-                style={{ left: `${h.x}%`, animationDelay: `${h.delay}s` }}
+                style={{ left: `${heart.x}%`, animationDelay: `${heart.delay}s` }}
               >
                 ❤
               </span>

@@ -181,7 +181,6 @@ const EventCard = memo(function EventCard({ event }: { event: TimelineEventData 
         </div>
 
         <h3 className="tag-event-title font-serif-cn">{event.title}</h3>
-
         <p className="tag-event-description">{event.description}</p>
 
         <div className="tag-event-tags">

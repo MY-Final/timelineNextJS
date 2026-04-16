@@ -127,7 +127,7 @@ const PhotoGallery = memo(function PhotoGallery({
           onClose={() => setLightboxIndex(null)}
           onPrev={() => setLightboxIndex((lightboxIndex - 1 + count) % count)}
           onNext={() => setLightboxIndex((lightboxIndex + 1) % count)}
-          onJump={(index) => setLightboxIndex(index)}
+          onJump={(nextIndex) => setLightboxIndex(nextIndex)}
         />
       )}
     </>
@@ -275,10 +275,7 @@ export default function TimelinePage() {
 
   useMouseTrail();
 
-  const sortedEvents = useMemo(
-    () => (ascending ? [...EVENTS] : [...EVENTS].reverse()),
-    [ascending],
-  );
+  const sortedEvents = useMemo(() => (ascending ? [...EVENTS] : [...EVENTS].reverse()), [ascending]);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isScrollingManually = useRef(false);
   const activeIndexRef = useRef(0);
