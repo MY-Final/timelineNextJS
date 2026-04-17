@@ -19,6 +19,9 @@
   --muted-deep:    #c084a8;
   --muted-darker:  #9a6075;
 
+  /* ── Heading / counter text ── */
+  --text-h:        #c0446a;
+
   /* ── Page backgrounds ── */
   --page-bg:       #fdf4f7;
   --page-bg-2:     #fff8fb;
@@ -49,6 +52,7 @@
   :root {
     --muted:         #9a6075;
     --muted-deep:    #9a6075;
+    --text-h:        #e8607e;
 
     --glass-white:  rgba(30, 15, 20, 0.50);
     --glass-soft:   rgba(20, 10, 16, 0.55);

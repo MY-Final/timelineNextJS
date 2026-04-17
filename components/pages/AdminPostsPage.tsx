@@ -47,19 +47,19 @@ function BatchToolbar({
       <span className="admin-batch-info">已选 <strong>{selectedIds.length}</strong> 条</span>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <button className="admin-action-btn" disabled={loading} onClick={() => onBatch("publish")}>
-          <BookOpen size={13} strokeWidth={1.8} /><span style={{ marginLeft: 4 }}>发布</span>
+          <BookOpen size={13} strokeWidth={1.8} />发布
         </button>
         <button className="admin-action-btn" disabled={loading} onClick={() => onBatch("unpublish")}>
-          <BookX size={13} strokeWidth={1.8} /><span style={{ marginLeft: 4 }}>下架</span>
+          <BookX size={13} strokeWidth={1.8} />下架
         </button>
         <button className="admin-action-btn" disabled={loading} onClick={() => onBatch("show")}>
-          <Eye size={13} strokeWidth={1.8} /><span style={{ marginLeft: 4 }}>公开</span>
+          <Eye size={13} strokeWidth={1.8} />公开
         </button>
         <button className="admin-action-btn" disabled={loading} onClick={() => onBatch("hide")}>
-          <EyeOff size={13} strokeWidth={1.8} /><span style={{ marginLeft: 4 }}>隐藏</span>
+          <EyeOff size={13} strokeWidth={1.8} />隐藏
         </button>
         <button className="admin-action-btn admin-action-btn--danger" disabled={loading} onClick={() => onBatch("delete")}>
-          <Trash2 size={13} strokeWidth={1.8} /><span style={{ marginLeft: 4 }}>删除</span>
+          <Trash2 size={13} strokeWidth={1.8} />删除
         </button>
       </div>
       <button className="admin-action-btn" onClick={onClearSelection} style={{ marginLeft: "auto" }}>取消选择</button>

@@ -84,8 +84,8 @@
 .date-badge-text {
   font-size: 11px;
   letter-spacing: 0.4em;
-  color: var(--muted);
-  font-weight: 500;
+  color: var(--muted-darker);
+  font-weight: 600;
   text-transform: uppercase;
   margin: 0;
   white-space: nowrap;

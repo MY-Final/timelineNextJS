@@ -120,6 +120,9 @@
 
 /* ── Action buttons ── */
 .admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 5px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(212, 92, 128, 0.3);
@@ -128,6 +131,8 @@
   font-size: 12px;
   cursor: pointer;
   transition: background var(--t-fast);
+  line-height: 1;
+  vertical-align: middle;
 }
 .admin-action-btn:hover { background: rgba(212, 92, 128, 0.1); }
 
@@ -135,8 +140,6 @@
   background: linear-gradient(135deg, var(--pk-500), var(--pk-600));
   color: #fff;
   border-color: transparent;
-  display: inline-flex;
-  align-items: center;
 }
 .admin-action-btn--primary:hover {
   background: linear-gradient(135deg, #c04a6e, var(--pk-700));
@@ -300,6 +303,12 @@
   border-radius: var(--radius-lg);
   padding: 8px 14px;
   margin-bottom: 12px;
+}
+.admin-batch-bar .admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
 }
 .admin-batch-info {
   font-size: 13px;
