@@ -31,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/admin": ["控制台"],
   "/admin/posts": ["控制台", "帖子管理"],
+  "/admin/posts/new": ["控制台", "帖子管理", "新建帖子"],
   "/admin/comments": ["控制台", "评论管理"],
 };
 
@@ -47,25 +48,19 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
 
   useEffect(() => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
         router.push("/login");
         return;
       }
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      // token 过期检测
-      if (payload.exp && payload.exp * 1000 < Date.now()) {
-        localStorage.removeItem("token");
-        router.push("/login");
-        return;
-      }
-      setUserName(payload.nickname || payload.username || "Admin");
+      const user = JSON.parse(userStr);
+      setUserName(user.nickname || user.username || "Admin");
       const roleMap: Record<string, string> = {
         superadmin: "超级管理员",
         admin: "管理员",
         user: "普通用户",
       };
-      setUserRole(roleMap[payload.role] ?? "管理员");
+      setUserRole(roleMap[user.role] ?? "管理员");
     } catch {
       router.push("/login");
     }
@@ -73,15 +68,11 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
 
   async function handleLogout() {
     try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
     } finally {
-      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       router.push("/login");
     }
   }

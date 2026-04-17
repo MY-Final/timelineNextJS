@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/pages/AdminLayout";
-import { FileText } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 
 const MOCK_POSTS = [
   { id: 1, title: "春天的第一朵花", author: "final", status: "published", date: "2026-03-20" },
@@ -10,13 +11,20 @@ const MOCK_POSTS = [
 ];
 
 export default function AdminPostsPage() {
+  const router = useRouter();
   return (
     <AdminLayout title="帖子管理">
       <div className="admin-panel">
-        <h2 className="admin-panel-title">
-          <FileText size={15} strokeWidth={1.8} />
-          帖子列表
-        </h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <h2 className="admin-panel-title" style={{ margin: 0 }}>
+            <FileText size={15} strokeWidth={1.8} />
+            帖子列表
+          </h2>
+          <button className="admin-action-btn admin-action-btn--primary" onClick={() => router.push("/admin/posts/new")}>
+            <Plus size={14} strokeWidth={2} style={{ marginRight: 4 }} />
+            新建帖子
+          </button>
+        </div>
         <table className="admin-table">
           <thead>
             <tr>

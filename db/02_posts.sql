@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS posts (
     user_id     BIGINT          NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     title       VARCHAR(200)    NOT NULL DEFAULT '',       -- 标题（可选）
     content     TEXT            NOT NULL,                  -- 正文
-    images      TEXT[]          DEFAULT '{}',              -- 图片 URL 数组
     tags        TEXT[]          DEFAULT '{}',              -- 标签数组
     is_public   BOOLEAN         NOT NULL DEFAULT TRUE,     -- 是否公开
     status      VARCHAR(20)     NOT NULL DEFAULT 'published', -- published / draft / deleted

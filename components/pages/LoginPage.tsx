@@ -103,11 +103,12 @@ export default function LoginPage() {
         body: JSON.stringify({ username: loginUsername, password: loginPassword }),
       });
       const json = await res.json();
-      if (!json.success) {
+      if (json.code !== 0) {
         setError(json.message || "登录失败");
         return;
       }
-      localStorage.setItem("token", json.data.token);
+      // token 已通过 HttpOnly Cookie 设置，localStorage 仅存用户信息用于前端展示
+      localStorage.setItem("user", JSON.stringify(json.data.user));
       router.push("/admin");
     } catch {
       setError("网络异常，请稍后重试");
