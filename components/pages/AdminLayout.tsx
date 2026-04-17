@@ -13,6 +13,8 @@ import {
   ExternalLink,
   Bell,
   ChevronRight,
+  Users,
+  Mail,
 } from "lucide-react";
 import "@/styles/Admin.css";
 
@@ -22,10 +24,16 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-const NAV_ITEMS: NavItem[] = [
+interface NavItemExt extends NavItem {
+  roles?: string[]; // 限制显示角色，为空则全部可见
+}
+
+const NAV_ITEMS: NavItemExt[] = [
   { label: "控制台", href: "/admin", icon: <LayoutDashboard size={16} strokeWidth={1.8} /> },
   { label: "帖子管理", href: "/admin/posts", icon: <FileText size={16} strokeWidth={1.8} /> },
   { label: "评论管理", href: "/admin/comments", icon: <MessageSquare size={16} strokeWidth={1.8} /> },
+  { label: "用户管理", href: "/admin/users", icon: <Users size={16} strokeWidth={1.8} /> },
+  { label: "SMTP 邮箱", href: "/admin/smtp", icon: <Mail size={16} strokeWidth={1.8} />, roles: ["superadmin"] },
 ];
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
@@ -33,6 +41,8 @@ const BREADCRUMB_MAP: Record<string, string[]> = {
   "/admin/posts": ["控制台", "帖子管理"],
   "/admin/posts/new": ["控制台", "帖子管理", "新建帖子"],
   "/admin/comments": ["控制台", "评论管理"],
+  "/admin/users": ["控制台", "用户管理"],
+  "/admin/smtp": ["控制台", "SMTP 邮箱"],
 };
 
 interface AdminLayoutProps {
@@ -45,6 +55,7 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
   const router = useRouter();
   const [userName, setUserName] = useState("Admin");
   const [userRole, setUserRole] = useState("管理员");
+  const [currentRole, setCurrentRole] = useState("");
 
   useEffect(() => {
     try {
@@ -61,6 +72,7 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
         user: "普通用户",
       };
       setUserRole(roleMap[user.role] ?? "管理员");
+      setCurrentRole(user.role ?? "");
     } catch {
       router.push("/login");
     }
@@ -105,7 +117,7 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
         {/* Nav */}
         <nav className="admin-nav" aria-label="后台导航">
           <span className="admin-nav-section">菜单</span>
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter(item => !item.roles || item.roles.includes(currentRole)).map((item) => (
             <button
               key={item.href}
               className={`admin-nav-item${pathname === item.href ? " active" : ""}`}

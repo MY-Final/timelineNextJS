@@ -361,3 +361,82 @@
   color: var(--text-muted);
   line-height: 1;
 }
+
+/* ── Status / role tags ── */
+.admin-status-tag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.admin-status-tag--published { background: rgba(74, 172, 74, 0.12); color: #2e7d32; }
+.admin-status-tag--draft     { background: rgba(180,180,180,0.15); color: #888; }
+.admin-status-tag--public    { background: rgba(66, 133, 244, 0.12); color: #1565c0; }
+.admin-status-tag--private   { background: rgba(180,90,90,0.1); color: #b03030; }
+.admin-status-tag--superadmin { background: rgba(192, 68, 106, 0.12); color: #c0446a; }
+.admin-status-tag--admin     { background: rgba(138, 68, 192, 0.1); color: #7b2d96; }
+.admin-status-tag--user      { background: rgba(66, 133, 244, 0.1); color: #1565c0; }
+
+/* ── Admin modal ── */
+.admin-modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.admin-modal {
+  background: #fff; border-radius: 16px; width: 100%; max-width: 480px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+  overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;
+}
+.admin-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border-soft);
+}
+.admin-modal-title { font-size: 14.5px; font-weight: 600; color: var(--text); }
+.admin-modal-close {
+  border: none; background: none; cursor: pointer;
+  color: var(--muted-deep); padding: 4px; border-radius: 6px;
+  display: flex; align-items: center; transition: color 0.18s;
+}
+.admin-modal-close:hover { color: var(--text); }
+.admin-modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.admin-modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+/* ── Admin form elements ── */
+.admin-form-row { display: flex; flex-direction: column; gap: 5px; }
+.admin-form-label { font-size: 12.5px; font-weight: 500; color: var(--text); }
+.admin-input {
+  height: 36px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--border-soft); font-size: 13.5px;
+  color: var(--text); background: var(--bg);
+  outline: none; transition: border-color 0.18s;
+}
+.admin-input:focus { border-color: var(--rose-300, #fda4af); }
+.admin-form-error { font-size: 12.5px; color: #c0392b; margin: 0; }
+
+/* ── Admin buttons ── */
+.admin-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 16px; border-radius: 8px; font-size: 13px;
+  font-weight: 500; cursor: pointer; border: none; transition: all 0.18s;
+}
+.admin-btn--primary {
+  background: linear-gradient(135deg, var(--rose-300, #fda4af), var(--rose-500, #f43f5e));
+  color: #fff; box-shadow: 0 2px 8px rgba(244,63,94,0.25);
+}
+.admin-btn--primary:hover { filter: brightness(1.07); }
+.admin-btn--primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.admin-btn--ghost {
+  background: transparent; color: var(--muted-deep);
+  border: 1px solid var(--border-soft);
+}
+.admin-btn--ghost:hover { background: rgba(0,0,0,0.04); }
+
+/* ── Admin toolbar ── */
+.admin-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+}
+.admin-filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

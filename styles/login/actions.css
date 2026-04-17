@@ -82,6 +82,27 @@
   padding: 4px 4px;
 }
 .login-error { font-size: 13px; color: #c0392b; text-align: center; margin: 0; padding: 2px 0; }
+.login-success { font-size: 13px; color: #27ae60; text-align: center; margin: 0; padding: 2px 0; }
+.login-hint--ok { color: #27ae60 !important; }
+
+/* ---------- Send code button ---------- */
+.login-send-code-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--rose-300, #fda4af);
+  background: transparent;
+  color: #c0446a;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s;
+}
+.login-send-code-btn:hover:not(:disabled) { background: rgba(253, 164, 175, 0.15); }
+.login-send-code-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 @media (prefers-color-scheme: dark) {
   .login-hint { color: #c07090; }
 }

@@ -1,0 +1,46 @@
+import { NextRequest } from 'next/server';
+import bcrypt from 'bcryptjs';
+import pool from '@/lib/db';
+import { getOtp, delOtp } from '@/lib/redis';
+import { ResultCode, successResponse, errorResponse } from '@/lib/result';
+
+/** POST /api/auth/reset-password
+ * body: { email, code, newPassword }
+ * 无需登录，通过邮箱验证码重置密码
+ */
+export async function POST(request: NextRequest) {
+  let body: { email?: string; code?: string; newPassword?: string };
+  try { body = await request.json(); } catch {
+    return errorResponse(ResultCode.BAD_REQUEST, '请求体格式错误');
+  }
+
+  const { email, code, newPassword } = body;
+  if (!email || !code || !newPassword) {
+    return errorResponse(ResultCode.BAD_REQUEST, '邮箱、验证码、新密码均为必填');
+  }
+  if (newPassword.length < 6) {
+    return errorResponse(ResultCode.BAD_REQUEST, '新密码长度不能少于 6 位');
+  }
+
+  const storedCode = await getOtp(`pwd:${email}`);
+  if (!storedCode) {
+    return errorResponse(ResultCode.BAD_REQUEST, '验证码已过期，请重新获取');
+  }
+  if (storedCode.toUpperCase() !== code.toUpperCase()) {
+    return errorResponse(ResultCode.BAD_REQUEST, '验证码错误');
+  }
+
+  const hash = await bcrypt.hash(newPassword, 12);
+  const client = await pool.connect();
+  try {
+    const res = await client.query(
+      `UPDATE users SET password = $1, updated_at = NOW() WHERE email = $2 RETURNING id`,
+      [hash, email]
+    );
+    if (!res.rows[0]) return errorResponse(ResultCode.NOT_FOUND, '未找到该邮箱对应账号');
+    await delOtp(`pwd:${email}`);
+    return successResponse(null, '密码重置成功，请重新登录');
+  } finally {
+    client.release();
+  }
+}

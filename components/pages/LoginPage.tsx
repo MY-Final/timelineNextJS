@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Heart, KeyRound, Lock, LogIn, User } from "lucide-react";
+import { Eye, EyeOff, Heart, KeyRound, Lock, LogIn, Mail, User, UserPlus } from "lucide-react";
 import "@/styles/Login.css";
 
-type Mode = "login" | "forgot" | "change";
+type Mode = "login" | "forgot" | "change" | "register";
 
 interface PasswordFieldProps {
   id: string;
@@ -54,11 +54,62 @@ function PasswordField({ id, label, placeholder, autoComplete, value, onChange, 
   );
 }
 
+// ── 验证码发送组件 ────────────────────────────────────
+function CodeField({ email, purpose, value, onChange }: {
+  email: string; purpose: "register" | "reset";
+  value: string; onChange: (v: string) => void;
+}) {
+  const [countdown, setCountdown] = useState(0);
+  const [sending, setSending] = useState(false);
+  const [hint, setHint] = useState("");
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function startCountdown() {
+    setCountdown(60);
+    timerRef.current = setInterval(() => {
+      setCountdown(c => { if (c <= 1) { clearInterval(timerRef.current!); return 0; } return c - 1; });
+    }, 1000);
+  }
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  async function sendCode() {
+    setHint("");
+    if (!email) { setHint("请先填写邮箱"); return; }
+    setSending(true);
+    try {
+      const res = await fetch("/api/auth/send-code", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, purpose }),
+      });
+      const json = await res.json();
+      if (json.code !== 0) { setHint(json.message || "发送失败"); return; }
+      setHint("验证码已发送，请查收邮件");
+      startCountdown();
+    } finally { setSending(false); }
+  }
+
+  return (
+    <div className="login-field">
+      <label className="login-label" htmlFor="otp-code">邮箱验证码</label>
+      <div className="login-input-wrap">
+        <KeyRound className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
+        <input id="otp-code" className="login-input" type="text" placeholder="6 位验证码"
+          maxLength={6} value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} />
+        <button type="button" className="login-send-code-btn"
+          disabled={countdown > 0 || sending} onClick={sendCode}>
+          {countdown > 0 ? `${countdown}s` : sending ? "发送中…" : "发送验证码"}
+        </button>
+      </div>
+      {hint && <p className={`login-hint${hint.includes("已发送") ? " login-hint--ok" : ""}`}>{hint}</p>}
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
 
-  // 显示/隐藏密码
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -67,6 +118,14 @@ export default function LoginPage() {
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
+  // 注册表单
+  const [regUsername, setRegUsername] = useState("");
+  const [regNickname, setRegNickname] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  const [regCode, setRegCode] = useState("");
+
   // 修改密码表单
   const [changeUsername, setChangeUsername] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -74,103 +133,90 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // 找回密码表单
-  const [forgotUsername, setForgotUsername] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotCode, setForgotCode] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+  // keep legacy unused state to avoid reference errors below
+  const [forgotUsername] = useState("");
 
   // 全局提示
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   function switchMode(next: Mode) {
-    setShowPassword(false);
-    setShowNewPassword(false);
-    setShowConfirmPassword(false);
-    setError("");
-    setMode(next);
+    setShowPassword(false); setShowNewPassword(false); setShowConfirmPassword(false);
+    setError(""); setSuccess(""); setMode(next);
   }
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    if (!loginUsername || !loginPassword) {
-      setError("账号和密码不能为空");
-      return;
-    }
+    e.preventDefault(); setError(""); setSuccess("");
+    if (!loginUsername || !loginPassword) { setError("账号和密码不能为空"); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
-      });
+      const res = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: loginUsername, password: loginPassword }) });
       const json = await res.json();
-      if (json.code !== 0) {
-        setError(json.message || "登录失败");
-        return;
-      }
-      // token 已通过 HttpOnly Cookie 设置，localStorage 仅存用户信息用于前端展示
+      if (json.code !== 0) { setError(json.message || "登录失败"); return; }
       localStorage.setItem("user", JSON.stringify(json.data.user));
       router.push("/admin");
-    } catch {
-      setError("网络异常，请稍后重试");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("网络异常，请稍后重试"); } finally { setLoading(false); }
+  }
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault(); setError(""); setSuccess("");
+    if (!regUsername || !regEmail || !regPassword || !regCode) { setError("所有字段均为必填"); return; }
+    if (regPassword !== regConfirmPassword) { setError("两次密码不一致"); return; }
+    if (regPassword.length < 6) { setError("密码不能少于 6 位"); return; }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: regUsername, nickname: regNickname || regUsername, email: regEmail, password: regPassword, code: regCode }) });
+      const json = await res.json();
+      if (json.code !== 0) { setError(json.message || "注册失败"); return; }
+      setSuccess("注册成功！请使用新账号登录");
+      setTimeout(() => switchMode("login"), 1500);
+    } catch { setError("网络异常，请稍后重试"); } finally { setLoading(false); }
   }
 
   async function handleChangePassword(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    if (!changeUsername || !currentPassword || !newPassword || !confirmPassword) {
-      setError("所有字段均为必填");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("两次输入的新密码不一致");
-      return;
-    }
-    if (newPassword.length < 6) {
-      setError("新密码长度不能少于 6 位");
-      return;
-    }
-
-    // 修改密码需要先登录获取 token
+    e.preventDefault(); setError("");
+    if (!changeUsername || !currentPassword || !newPassword || !confirmPassword) { setError("所有字段均为必填"); return; }
+    if (newPassword !== confirmPassword) { setError("两次新密码不一致"); return; }
+    if (newPassword.length < 6) { setError("新密码不能少于 6 位"); return; }
     setLoading(true);
     try {
-      // 先用当前账号密码登录取 token
-      const loginRes = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: changeUsername, password: currentPassword }),
-      });
+      const loginRes = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: changeUsername, password: currentPassword }) });
       const loginJson = await loginRes.json();
-      if (!loginJson.success) {
-        setError(loginJson.message || "账号或当前密码错误");
-        return;
-      }
-      const token = loginJson.data.token;
-
-      const res = await fetch("/api/auth/change-password", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ oldPassword: currentPassword, newPassword }),
-      });
+      if (loginJson.code !== 0) { setError(loginJson.message || "账号或当前密码错误"); return; }
+      const res = await fetch("/api/auth/change-password", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ oldPassword: currentPassword, newPassword }) });
       const json = await res.json();
-      if (!json.success) {
-        setError(json.message || "修改失败");
-        return;
-      }
-      // 修改成功后回到登录页
-      switchMode("login");
-      setError(""); // 清除，改为用 success 提示可扩展
-    } catch {
-      setError("网络异常，请稍后重试");
-    } finally {
-      setLoading(false);
-    }
+      if (json.code !== 0) { setError(json.message || "修改失败"); return; }
+      switchMode("login"); setSuccess("密码修改成功，请重新登录");
+    } catch { setError("网络异常，请稍后重试"); } finally { setLoading(false); }
   }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault(); setError("");
+    if (!forgotEmail || !forgotCode || !forgotNewPassword || !forgotConfirmPassword) { setError("所有字段均为必填"); return; }
+    if (forgotNewPassword !== forgotConfirmPassword) { setError("两次密码不一致"); return; }
+    if (forgotNewPassword.length < 6) { setError("新密码不能少于 6 位"); return; }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: forgotEmail, code: forgotCode, newPassword: forgotNewPassword }) });
+      const json = await res.json();
+      if (json.code !== 0) { setError(json.message || "重置失败"); return; }
+      switchMode("login"); setSuccess("密码重置成功，请使用新密码登录");
+    } catch { setError("网络异常，请稍后重试"); } finally { setLoading(false); }
+  }
+
+  const TITLES: Record<Mode, string> = { login: "欢迎回来", register: "创建账号", forgot: "找回密码", change: "修改密码" };
+  const SUBTITLES: Record<Mode, string> = {
+    login: "请登录以继续查看我们的故事",
+    register: "注册账号，记录我们的每一天",
+    forgot: "通过邮箱验证码重置密码",
+    change: "请验证身份并设置新密码",
+  };
+  void forgotUsername; // suppress unused warning
 
   return (
     <main className="login-shell">
@@ -178,7 +224,6 @@ export default function LoginPage() {
       <div className="login-orb login-orb-2" aria-hidden="true" />
       <div className="login-orb login-orb-3" aria-hidden="true" />
 
-      {/* Top decorative line */}
       <div className="login-top">
         <div className="login-date-badge">
           <div className="login-badge-line" />
@@ -187,215 +232,142 @@ export default function LoginPage() {
       </div>
 
       <div className="login-center">
-        {/* Heart icon */}
         <div className="login-icon-wrap" aria-hidden="true">
           <Heart className="login-heart-icon" size={28} fill="currentColor" strokeWidth={0} />
         </div>
+        <p className="login-title">{TITLES[mode]}</p>
+        <p className="login-subtitle">{SUBTITLES[mode]}</p>
 
-        <p className="login-title">
-          {mode === "login" && "欢迎回来"}
-          {mode === "forgot" && "找回密码"}
-          {mode === "change" && "修改密码"}
-        </p>
-        <p className="login-subtitle">
-          {mode === "login" && "请登录以继续查看我们的故事"}
-          {mode === "forgot" && "请联系管理员协助重置密码"}
-          {mode === "change" && "请验证身份并设置新密码"}
-        </p>
-
-        {/* Card */}
         <div className="login-card">
-
-          {/* ── LOGIN MODE ── */}
+          {/* ── LOGIN ── */}
           {mode === "login" && (
             <form className="login-form" onSubmit={handleLogin}>
-              {/* Username */}
               <div className="login-field">
-                <label className="login-label" htmlFor="login-username">
-                  账号
-                </label>
+                <label className="login-label" htmlFor="login-username">账号</label>
                 <div className="login-input-wrap">
                   <User className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
-                  <input
-                    id="login-username"
-                    className="login-input"
-                    type="text"
-                    placeholder="请输入账号"
-                    autoComplete="username"
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    value={loginUsername}
-                    onChange={(e) => setLoginUsername(e.target.value)}
-                  />
+                  <input id="login-username" className="login-input" type="text" placeholder="请输入账号"
+                    autoComplete="username" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                    value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} />
                 </div>
               </div>
-
-              {/* Password */}
-              <PasswordField
-                id="login-password"
-                label="密码"
-                placeholder="请输入密码"
-                autoComplete="current-password"
-                value={loginPassword}
-                onChange={setLoginPassword}
-                show={showPassword}
-                onToggle={() => setShowPassword((v) => !v)}
-              />
-
+              <PasswordField id="login-password" label="密码" placeholder="请输入密码" autoComplete="current-password"
+                value={loginPassword} onChange={setLoginPassword} show={showPassword} onToggle={() => setShowPassword(v => !v)} />
               {error && <p className="login-error">{error}</p>}
-
+              {success && <p className="login-success">{success}</p>}
               <button type="submit" className="login-btn-primary" disabled={loading}>
-                <LogIn size={15} strokeWidth={1.8} aria-hidden="true" />
-                {loading ? "登录中…" : "登录"}
+                <LogIn size={15} strokeWidth={1.8} aria-hidden="true" />{loading ? "登录中…" : "登录"}
               </button>
-
               <div className="login-links">
-                <button
-                  type="button"
-                  className="login-link"
-                  onClick={() => switchMode("forgot")}
-                >
-                  忘记密码
-                </button>
+                <button type="button" className="login-link" onClick={() => switchMode("register")}>注册账号</button>
                 <span className="login-link-sep" aria-hidden="true">·</span>
-                <button
-                  type="button"
-                  className="login-link"
-                  onClick={() => switchMode("change")}
-                >
-                  修改密码
-                </button>
+                <button type="button" className="login-link" onClick={() => switchMode("forgot")}>忘记密码</button>
+                <span className="login-link-sep" aria-hidden="true">·</span>
+                <button type="button" className="login-link" onClick={() => switchMode("change")}>修改密码</button>
               </div>
             </form>
           )}
 
-          {/* ── FORGOT MODE ── */}
-          {mode === "forgot" && (
-            <form className="login-form" onSubmit={(e) => e.preventDefault()}>
-              {/* Username */}
+          {/* ── REGISTER ── */}
+          {mode === "register" && (
+            <form className="login-form" onSubmit={handleRegister}>
               <div className="login-field">
-                <label className="login-label" htmlFor="forgot-username">
-                  账号
-                </label>
+                <label className="login-label" htmlFor="reg-username">账号 *</label>
                 <div className="login-input-wrap">
                   <User className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
-                  <input
-                    id="forgot-username"
-                    className="login-input"
-                    type="text"
-                    placeholder="请输入账号"
-                    autoComplete="username"
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    value={forgotUsername}
-                    onChange={(e) => setForgotUsername(e.target.value)}
-                  />
+                  <input id="reg-username" className="login-input" type="text" placeholder="登录账号（字母/数字）"
+                    autoComplete="username" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                    value={regUsername} onChange={(e) => setRegUsername(e.target.value)} />
                 </div>
               </div>
-
-              <p className="login-hint">
-                提交后请联系管理员，验证身份后即可重置密码。
-              </p>
-
-              <button type="submit" className="login-btn-primary">
-                <KeyRound size={15} strokeWidth={1.8} aria-hidden="true" />
-                发送重置请求
+              <div className="login-field">
+                <label className="login-label" htmlFor="reg-nickname">昵称</label>
+                <div className="login-input-wrap">
+                  <User className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
+                  <input id="reg-nickname" className="login-input" type="text" placeholder="显示名称（可选）"
+                    value={regNickname} onChange={(e) => setRegNickname(e.target.value)} />
+                </div>
+              </div>
+              <div className="login-field">
+                <label className="login-label" htmlFor="reg-email">邮箱 *</label>
+                <div className="login-input-wrap">
+                  <Mail className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
+                  <input id="reg-email" className="login-input" type="email" placeholder="用于接收验证码"
+                    autoComplete="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                </div>
+              </div>
+              <CodeField email={regEmail} purpose="register" value={regCode} onChange={setRegCode} />
+              <PasswordField id="reg-password" label="密码 *" placeholder="至少 6 位" autoComplete="new-password"
+                value={regPassword} onChange={setRegPassword} show={showPassword} onToggle={() => setShowPassword(v => !v)} />
+              <PasswordField id="reg-confirm-password" label="确认密码 *" placeholder="再次输入密码" autoComplete="new-password"
+                value={regConfirmPassword} onChange={setRegConfirmPassword} show={showConfirmPassword} onToggle={() => setShowConfirmPassword(v => !v)} />
+              {error && <p className="login-error">{error}</p>}
+              {success && <p className="login-success">{success}</p>}
+              <button type="submit" className="login-btn-primary" disabled={loading}>
+                <UserPlus size={15} strokeWidth={1.8} aria-hidden="true" />{loading ? "注册中…" : "注册"}
               </button>
-
               <div className="login-links">
-                <button
-                  type="button"
-                  className="login-link"
-                  onClick={() => switchMode("login")}
-                >
-                  返回登录
-                </button>
+                <button type="button" className="login-link" onClick={() => switchMode("login")}>已有账号？去登录</button>
               </div>
             </form>
           )}
 
-          {/* ── CHANGE PASSWORD MODE ── */}
+          {/* ── FORGOT ── */}
+          {mode === "forgot" && (
+            <form className="login-form" onSubmit={handleForgotPassword}>
+              <div className="login-field">
+                <label className="login-label" htmlFor="forgot-email">注册邮箱 *</label>
+                <div className="login-input-wrap">
+                  <Mail className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
+                  <input id="forgot-email" className="login-input" type="email" placeholder="输入注册时使用的邮箱"
+                    autoComplete="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+                </div>
+              </div>
+              <CodeField email={forgotEmail} purpose="reset" value={forgotCode} onChange={setForgotCode} />
+              <PasswordField id="forgot-new-password" label="新密码 *" placeholder="至少 6 位" autoComplete="new-password"
+                value={forgotNewPassword} onChange={setForgotNewPassword} show={showNewPassword} onToggle={() => setShowNewPassword(v => !v)} />
+              <PasswordField id="forgot-confirm-password" label="确认新密码 *" placeholder="再次输入新密码" autoComplete="new-password"
+                value={forgotConfirmPassword} onChange={setForgotConfirmPassword} show={showConfirmPassword} onToggle={() => setShowConfirmPassword(v => !v)} />
+              {error && <p className="login-error">{error}</p>}
+              <button type="submit" className="login-btn-primary" disabled={loading}>
+                <KeyRound size={15} strokeWidth={1.8} aria-hidden="true" />{loading ? "提交中…" : "重置密码"}
+              </button>
+              <div className="login-links">
+                <button type="button" className="login-link" onClick={() => switchMode("login")}>返回登录</button>
+              </div>
+            </form>
+          )}
+
+          {/* ── CHANGE PASSWORD ── */}
           {mode === "change" && (
             <form className="login-form" onSubmit={handleChangePassword}>
-              {/* Username */}
               <div className="login-field">
-                <label className="login-label" htmlFor="change-username">
-                  账号
-                </label>
+                <label className="login-label" htmlFor="change-username">账号</label>
                 <div className="login-input-wrap">
                   <User className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
-                  <input
-                    id="change-username"
-                    className="login-input"
-                    type="text"
-                    placeholder="请输入账号"
-                    autoComplete="username"
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    value={changeUsername}
-                    onChange={(e) => setChangeUsername(e.target.value)}
-                  />
+                  <input id="change-username" className="login-input" type="text" placeholder="请输入账号"
+                    autoComplete="username" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                    value={changeUsername} onChange={(e) => setChangeUsername(e.target.value)} />
                 </div>
               </div>
-
-              <PasswordField
-                id="current-password"
-                label="当前密码"
-                placeholder="请输入当前密码"
-                autoComplete="current-password"
-                value={currentPassword}
-                onChange={setCurrentPassword}
-                show={showPassword}
-                onToggle={() => setShowPassword((v) => !v)}
-              />
-
-              <PasswordField
-                id="new-password"
-                label="新密码"
-                placeholder="请输入新密码"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={setNewPassword}
-                show={showNewPassword}
-                onToggle={() => setShowNewPassword((v) => !v)}
-              />
-
-              <PasswordField
-                id="confirm-password"
-                label="确认新密码"
-                placeholder="再次输入新密码"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-                show={showConfirmPassword}
-                onToggle={() => setShowConfirmPassword((v) => !v)}
-              />
-
+              <PasswordField id="current-password" label="当前密码" placeholder="请输入当前密码" autoComplete="current-password"
+                value={currentPassword} onChange={setCurrentPassword} show={showPassword} onToggle={() => setShowPassword(v => !v)} />
+              <PasswordField id="new-password" label="新密码" placeholder="请输入新密码" autoComplete="new-password"
+                value={newPassword} onChange={setNewPassword} show={showNewPassword} onToggle={() => setShowNewPassword(v => !v)} />
+              <PasswordField id="confirm-password" label="确认新密码" placeholder="再次输入新密码" autoComplete="new-password"
+                value={confirmPassword} onChange={setConfirmPassword} show={showConfirmPassword} onToggle={() => setShowConfirmPassword(v => !v)} />
               {error && <p className="login-error">{error}</p>}
-
               <button type="submit" className="login-btn-primary" disabled={loading}>
-                <KeyRound size={15} strokeWidth={1.8} aria-hidden="true" />
-                {loading ? "提交中…" : "确认修改"}
+                <KeyRound size={15} strokeWidth={1.8} aria-hidden="true" />{loading ? "提交中…" : "确认修改"}
               </button>
-
               <div className="login-links">
-                <button
-                  type="button"
-                  className="login-link"
-                  onClick={() => switchMode("login")}
-                >
-                  返回登录
-                </button>
+                <button type="button" className="login-link" onClick={() => switchMode("login")}>返回登录</button>
               </div>
             </form>
           )}
         </div>
       </div>
 
-      {/* Bottom tagline */}
       <div className="login-bottom">
         <div className="login-tagline">
           <p className="login-tagline-text">每一天都值得被记住</p>
