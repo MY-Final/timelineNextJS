@@ -267,3 +267,61 @@
 @keyframes admin-spin { to { transform: rotate(360deg); } }
 .admin-upload-error { color: #d44040; font-size: 11px; flex-shrink: 0; }
 .admin-upload-ok { color: #40a060; font-weight: 600; flex-shrink: 0; }
+
+/* ── Filter bar selects & date inputs ── */
+.admin-filter-select,
+.admin-filter-date {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-input);
+  background: var(--surface-input);
+  color: var(--text-base);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+}
+.admin-filter-select { flex: 0 0 auto; }
+.admin-filter-date  { flex: 0 0 auto; width: 136px; }
+.admin-filter-select:focus,
+.admin-filter-date:focus {
+  border-color: var(--pk-500);
+  box-shadow: 0 0 0 3px rgba(212, 92, 128, 0.12);
+}
+
+/* ── Batch action toolbar ── */
+.admin-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: rgba(212, 92, 128, 0.07);
+  border: 1px solid rgba(212, 92, 128, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 8px 14px;
+  margin-bottom: 12px;
+}
+.admin-batch-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.admin-batch-info strong { color: var(--pk-500); }
+
+/* ── Row checkbox button ── */
+.admin-check-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color var(--t-fast);
+}
+.admin-check-btn:hover { color: var(--pk-500); }
+
+/* ── Selected table row highlight ── */
+.admin-table-row--selected { background: rgba(212, 92, 128, 0.06) !important; }

@@ -20,3 +20,7 @@ ALTER TABLE posts
 CREATE INDEX IF NOT EXISTS idx_posts_user_id    ON posts (user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_tags       ON posts USING GIN (tags);
+
+-- 新增：帖子实际发生日期（用于时间线排序，可与 created_at 不同）
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS event_date DATE;
+CREATE INDEX IF NOT EXISTS idx_posts_event_date ON posts (event_date DESC);

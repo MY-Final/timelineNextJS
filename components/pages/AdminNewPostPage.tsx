@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/pages/AdminLayout";
-import { Upload, X, Image as ImageIcon, Plus, Loader2 } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Plus, Loader2, Tag } from "lucide-react";
 import "@/styles/Admin.css";
 
 const MAX_IMAGES = 10;
@@ -24,6 +24,10 @@ export default function AdminNewPostPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [status, setStatus] = useState<"published" | "draft">("published");
+  const [eventDate, setEventDate] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const tagInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -122,7 +126,7 @@ export default function AdminNewPostPage() {
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), content: content.trim(), status, images }),
+        body: JSON.stringify({ title: title.trim(), content: content.trim(), status, event_date: eventDate || null, tags, images }),
       });
       const json = await res.json();
       if (json.code !== 0) {
@@ -170,6 +174,65 @@ export default function AdminNewPostPage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
+        </div>
+
+        {/* 实际日期 */}
+        <div className="admin-form-field">
+          <label className="admin-form-label" htmlFor="post-event-date">实际日期</label>
+          <input
+            id="post-event-date"
+            className="admin-form-input"
+            type="date"
+            value={eventDate}
+            onChange={(e) => setEventDate(e.target.value)}
+          />
+          <p style={{ fontSize: 12, color: "#b08090", margin: "4px 0 0" }}>时间线将按此日期排序，留空则使用发布时间</p>
+        </div>
+
+        {/* 标签 */}
+        <div className="admin-form-field">
+          <label className="admin-form-label">标签</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+            {tags.map((tag) => (
+              <span key={tag} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 20, background: "rgba(251,113,133,0.1)", border: "1px solid rgba(251,113,133,0.3)", fontSize: 12, color: "#c0607a" }}>
+                {tag}
+                <button type="button" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#c0607a", lineHeight: 1 }} onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}>×</button>
+              </span>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              ref={tagInputRef}
+              className="admin-form-input"
+              type="text"
+              placeholder="输入标签后按回车或点击添加..."
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const t = tagInput.trim();
+                  if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
+                  setTagInput("");
+                }
+              }}
+              style={{ flex: 1 }}
+            />
+            <button
+              type="button"
+              className="admin-action-btn"
+              style={{ flexShrink: 0 }}
+              disabled={!tagInput.trim()}
+              onClick={() => {
+                const t = tagInput.trim();
+                if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
+                setTagInput("");
+                tagInputRef.current?.focus();
+              }}
+            >
+              <Plus size={13} strokeWidth={2} />
+            </button>
+          </div>
         </div>
 
         {/* 状态 */}

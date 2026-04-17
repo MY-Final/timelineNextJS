@@ -27,6 +27,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       `SELECT
          p.id, p.title, p.content, p.tags, p.is_public, p.status,
          p.like_count, p.comment_count, p.created_at, p.updated_at,
+         p.event_date,
          u.username AS author_username, u.nickname AS author_nickname, u.avatar AS author_avatar
        FROM posts p
        JOIN users u ON u.id = p.user_id
@@ -94,6 +95,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     tags?: string[];
     is_public?: boolean;
     status?: string;
+    event_date?: string | null;
     images?: ImageInput[];
   };
   try {
@@ -161,6 +163,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       }
       addField('status', s);
     }
+    if ('event_date' in body) addField('event_date', body.event_date || null);
 
     if (setClauses.length > 1) {
       values.push(postId);

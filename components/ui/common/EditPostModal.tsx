@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, Edit3, Loader2 } from "lucide-react";
+import { X, Edit3, Loader2, Tag, Plus } from "lucide-react";
 
 interface Props {
   postId: number;
@@ -15,14 +15,18 @@ interface PostData {
   content: string;
   status: "published" | "draft";
   is_public: boolean;
+  event_date: string;
+  tags: string[];
 }
 
 export default function EditPostModal({ postId, onClose, onSaved }: Props) {
-  const [form, setForm] = useState<PostData>({ title: "", content: "", status: "published", is_public: true });
+  const [form, setForm] = useState<PostData>({ title: "", content: "", status: "published", is_public: true, event_date: "", tags: [] });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
   // 加载现有数据
   useEffect(() => {
@@ -40,6 +44,8 @@ export default function EditPostModal({ postId, onClose, onSaved }: Props) {
             content: d.content ?? "",
             status: d.status === "draft" ? "draft" : "published",
             is_public: d.is_public !== false,
+            event_date: d.event_date ? d.event_date.slice(0, 10) : "",
+            tags: Array.isArray(d.tags) ? d.tags : [],
           });
         } else {
           setLoadError(json.message || "加载失败");
@@ -77,6 +83,8 @@ export default function EditPostModal({ postId, onClose, onSaved }: Props) {
           content: form.content.trim(),
           status: form.status,
           is_public: form.is_public,
+          event_date: form.event_date || null,
+          tags: form.tags,
         }),
       });
       const json = await res.json();
@@ -169,6 +177,65 @@ export default function EditPostModal({ postId, onClose, onSaved }: Props) {
                       <input type="radio" name="epost-public" value="hidden" checked={!form.is_public} onChange={() => setForm((f) => ({ ...f, is_public: false }))} disabled={submitting} />
                       <span>隐藏</span>
                     </label>
+                  </div>
+                </div>
+
+                <div className="admin-form-field">
+                  <label className="admin-form-label" htmlFor="epost-event-date">实际日期</label>
+                  <input
+                    id="epost-event-date"
+                    className="admin-form-input"
+                    type="date"
+                    value={form.event_date}
+                    onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
+                    disabled={submitting}
+                  />
+                  <p style={{ fontSize: 12, color: "#b08090", margin: "4px 0 0" }}>时间线按此日期排序，留空则使用发布时间</p>
+                </div>
+
+                <div className="admin-form-field">
+                  <label className="admin-form-label">标签</label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {form.tags.map((tag) => (
+                      <span key={tag} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 10px", borderRadius: 20, background: "rgba(251,113,133,0.1)", border: "1px solid rgba(251,113,133,0.3)", fontSize: 12, color: "#c0607a" }}>
+                        {tag}
+                        <button type="button" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#c0607a", lineHeight: 1 }} onClick={() => setForm((f) => ({ ...f, tags: f.tags.filter((t) => t !== tag) }))} disabled={submitting}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input
+                      ref={tagInputRef}
+                      className="admin-form-input"
+                      type="text"
+                      placeholder="输入标签后按回车或点击添加..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const t = tagInput.trim();
+                          if (t && !form.tags.includes(t)) setForm((f) => ({ ...f, tags: [...f.tags, t] }));
+                          setTagInput("");
+                        }
+                      }}
+                      disabled={submitting}
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="admin-action-btn"
+                      style={{ flexShrink: 0 }}
+                      disabled={submitting || !tagInput.trim()}
+                      onClick={() => {
+                        const t = tagInput.trim();
+                        if (t && !form.tags.includes(t)) setForm((f) => ({ ...f, tags: [...f.tags, t] }));
+                        setTagInput("");
+                        tagInputRef.current?.focus();
+                      }}
+                    >
+                      <Plus size={13} strokeWidth={2} />
+                    </button>
                   </div>
                 </div>
 

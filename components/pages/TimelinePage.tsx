@@ -2,27 +2,45 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowUp, ArrowUpDown, Calendar, Heart, Tag } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowUpDown, Calendar, Heart, Loader2, Tag } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/common/ImageLightbox";
-import eventsJson from "@/data/events.json";
 import { useFloatingHearts, useMouseTrail, useSecretClick } from "@/lib/easter-eggs";
 import { getCardTransform } from "@/lib/gallery";
-import { getImagesByDate } from "@/lib/images";
+
+interface TimelinePostImage {
+  url: string;
+  storage_key: string;
+  sort_order: number;
+}
 
 interface TimelineEventData {
   id: number;
+  /** YYYY-MM-DD — 优先取 event_date，如为空则取 created_at 日期 */
   date: string;
   title: string;
   description: string;
-  location: string;
   images: string[];
   tags: string[];
 }
 
-const EVENTS: TimelineEventData[] = eventsJson.map((event) => ({
-  ...event,
-  images: getImagesByDate(event.date),
-}));
+function mapApiPost(p: {
+  id: number;
+  title: string;
+  content: string;
+  tags: string[];
+  event_date: string | null;
+  created_at: string;
+  images: TimelinePostImage[];
+}): TimelineEventData {
+  return {
+    id: p.id,
+    date: p.event_date ? p.event_date.slice(0, 10) : p.created_at.slice(0, 10),
+    title: p.title,
+    description: p.content,
+    images: p.images.map((img) => img.url),
+    tags: p.tags ?? [],
+  };
+}
 
 function useScrollReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -268,6 +286,8 @@ function FloatingDots() {
 }
 
 export default function TimelinePage() {
+  const [events, setEvents] = useState<TimelineEventData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [ascending, setAscending] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
@@ -275,13 +295,28 @@ export default function TimelinePage() {
 
   useMouseTrail();
 
-  const sortedEvents = useMemo(() => (ascending ? [...EVENTS] : [...EVENTS].reverse()), [ascending]);
+  useEffect(() => {
+    fetch("/api/timeline")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.code === 0 && Array.isArray(json.data)) {
+          // API 已按 event_date DESC 排序，ascending=false 时直接使用
+          setEvents(json.data.map(mapApiPost));
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const sortedEvents = useMemo(
+    () => (ascending ? [...events].reverse() : [...events]),
+    [ascending, events],
+  );
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isScrollingManually = useRef(false);
   const activeIndexRef = useRef(0);
 
   const today = new Date().toISOString().slice(0, 10);
-  const isSpecialDay = EVENTS.some((event) => event.date === today);
+  const isSpecialDay = events.some((event) => event.date === today);
 
   const scrollToSection = useCallback((index: number) => {
     const el = sectionRefs.current[index];
@@ -383,20 +418,26 @@ export default function TimelinePage() {
 
       <main className="timeline-main">
         <div className="timeline-line" aria-hidden="true" />
-        <div className="timeline-events">
-          {sortedEvents.map((event, index) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              index={index}
-              isActive={activeIndex === index}
-              cardRef={(el) => {
-                sectionRefs.current[index] = el;
-              }}
-              onActivate={() => scrollToSection(index)}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div style={{ display: "flex", justifyContent: "center", padding: "80px 0", color: "var(--muted)" }}>
+            <Loader2 size={28} strokeWidth={1.5} style={{ animation: "spin 1s linear infinite" }} />
+          </div>
+        ) : (
+          <div className="timeline-events">
+            {sortedEvents.map((event, index) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                index={index}
+                isActive={activeIndex === index}
+                cardRef={(el) => {
+                  sectionRefs.current[index] = el;
+                }}
+                onActivate={() => scrollToSection(index)}
+              />
+            ))}
+          </div>
+        )}
       </main>
 
       <SideNav events={sortedEvents} activeIndex={activeIndex} onNavigate={scrollToSection} />

@@ -91,25 +91,28 @@ export default function PostDetailModal({ postId, onClose, onUpdated }: Props) {
 
   return createPortal(
     <>
-      {/* Backdrop */}
-      <div className="pmodal-backdrop" onClick={onClose} />
+      {/* When edit is open, hide the detail modal completely — only show edit modal */}
+      {!showEdit && (
+        <>
+          {/* Backdrop */}
+          <div className="pmodal-backdrop" onClick={onClose} />
 
-      {/* Panel */}
-      <div className="pmodal-panel" role="dialog" aria-modal="true">
-        {/* Header */}
-        <div className="pmodal-header">
-          <span className="pmodal-header-title">帖子详情</span>
-          <div style={{ display: "flex", gap: 6 }}>
-            {post && (
-              <button className="pmodal-edit" onClick={() => setShowEdit(true)} aria-label="编辑" title="编辑帖子">
-                <Edit3 size={15} strokeWidth={1.8} />
-              </button>
-            )}
-            <button className="pmodal-close" onClick={onClose} aria-label="关闭">
-              <X size={16} strokeWidth={1.8} />
-            </button>
-          </div>
-        </div>
+          {/* Panel */}
+          <div className="pmodal-panel" role="dialog" aria-modal="true">
+            {/* Header */}
+            <div className="pmodal-header">
+              <span className="pmodal-header-title">帖子详情</span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {post && (
+                  <button className="pmodal-edit" onClick={() => setShowEdit(true)} aria-label="编辑" title="编辑帖子">
+                    <Edit3 size={15} strokeWidth={1.8} />
+                  </button>
+                )}
+                <button className="pmodal-close" onClick={onClose} aria-label="关闭">
+                  <X size={16} strokeWidth={1.8} />
+                </button>
+              </div>
+            </div>
 
         {/* Body */}
         <div className="pmodal-body">
@@ -212,16 +215,18 @@ export default function PostDetailModal({ postId, onClose, onUpdated }: Props) {
           onJump={setLightboxIndex}
         />
       )}
+        </>
+      )}
 
-      {/* Edit modal */}
+      {/* Edit modal — replaces the detail modal entirely when open */}
       {showEdit && (
         <EditPostModal
           postId={postId}
           onClose={() => setShowEdit(false)}
           onSaved={() => {
             setShowEdit(false);
-            fetchDetail(); // 刷新详情
-            onUpdated?.(); // 通知列表刷新
+            fetchDetail();
+            onUpdated?.();
           }}
         />
       )}

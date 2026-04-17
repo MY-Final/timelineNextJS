@@ -5,25 +5,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/common/ImageLightbox";
-import eventsJson from "@/data/events.json";
-import { getImagesByDate } from "@/lib/images";
 
 interface TimelineEventData {
   id: number;
   date: string;
   title: string;
   description: string;
-  location: string;
   images: string[];
   tags: string[];
 }
-
-const EVENTS: TimelineEventData[] = eventsJson.map((event) => ({
-  ...event,
-  images: getImagesByDate(event.date),
-}));
-
-const allTags = [...new Set(EVENTS.flatMap((event) => event.tags))];
 
 function FloatingDots() {
   return (
@@ -196,12 +186,38 @@ const EventCard = memo(function EventCard({ event }: { event: TimelineEventData 
 });
 
 export default function TagPage() {
+  const [events, setEvents] = useState<TimelineEventData[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  useEffect(() => {
+    // 并行获取帖子列表和所有 tag
+    Promise.all([
+      fetch("/api/timeline").then((r) => r.json()),
+      fetch("/api/tags").then((r) => r.json()),
+    ]).then(([timelineJson, tagsJson]) => {
+      if (timelineJson.code === 0 && Array.isArray(timelineJson.data)) {
+        setEvents(
+          timelineJson.data.map((p: { id: number; title: string; content: string; tags: string[]; event_date: string | null; created_at: string; images: { url: string; sort_order: number }[] }) => ({
+            id: p.id,
+            date: p.event_date ? p.event_date.slice(0, 10) : p.created_at.slice(0, 10),
+            title: p.title,
+            description: p.content,
+            images: p.images.map((img) => img.url),
+            tags: p.tags ?? [],
+          })),
+        );
+      }
+      if (tagsJson.code === 0 && Array.isArray(tagsJson.data)) {
+        setAllTags(tagsJson.data);
+      }
+    });
+  }, []);
+
   const filteredEvents = useMemo(() => {
-    if (selectedTags.length === 0) return EVENTS;
-    return EVENTS.filter((event) => selectedTags.some((tag) => event.tags.includes(tag)));
-  }, [selectedTags]);
+    if (selectedTags.length === 0) return events;
+    return events.filter((event) => selectedTags.some((tag) => event.tags.includes(tag)));
+  }, [selectedTags, events]);
 
   return (
     <div className="tag-shell">

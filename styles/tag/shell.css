@@ -53,8 +53,9 @@
   position: relative; z-index: 10;
 }
 
-.tag-back { position: relative; top: auto; left: auto; }
+.tag-back { position: relative; top: auto; left: auto; color: var(--muted-darker); }
+.tag-back:hover { color: var(--rose-300); }
 @media (prefers-color-scheme: dark) {
-  .tag-back { color: rgba(154, 112, 117, 0.4); }
+  .tag-back { color: rgba(154, 112, 117, 0.7); }
   .tag-back:hover { color: rgba(154, 112, 117, 1); }
 }
