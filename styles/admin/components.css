@@ -325,3 +325,30 @@
 
 /* ── Selected table row highlight ── */
 .admin-table-row--selected { background: rgba(212, 92, 128, 0.06) !important; }
+
+/* ── Pagination ── */
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+.admin-pagination-info {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.admin-pagination-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.admin-pagination-ellipsis {
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1;
+}

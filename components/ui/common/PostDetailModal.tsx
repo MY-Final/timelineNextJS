@@ -125,39 +125,22 @@ export default function PostDetailModal({ postId, onClose, onUpdated }: Props) {
             <p className="pmodal-error">{error}</p>
            ) : post ? (
              <>
-               {/* Meta row - status & visibility badges */}
-               <div className="pmodal-meta-top">
-                 <div className="pmodal-status-row">
-                   <span className={`pmodal-status-badge pmodal-status-badge--${post.status}`}>
-                     {post.status === "published" ? "已发布" : "草稿"}
-                   </span>
-                   <span className={`pmodal-visibility-badge ${post.is_public ? "pmodal-visibility-badge--public" : "pmodal-visibility-badge--private"}`}>
-                     {post.is_public ? <><Eye size={10} style={{ marginRight: 3 }} />公开</> : <><EyeOff size={10} style={{ marginRight: 3 }} />仅自己</>}
-                   </span>
-                 </div>
-               </div>
-
                {/* Title */}
                {post.title && <h2 className="pmodal-title">{post.title}</h2>}
 
-               {/* Tags */}
-               {post.tags?.length > 0 && (
-                 <div className="pmodal-tags">
-                   {post.tags.map((t) => <span key={t} className="pmodal-tag">#{t}</span>)}
-                 </div>
-               )}
-
-               {/* Stats row */}
-               <div className="pmodal-stats-row">
-                 <div className="pmodal-stat-item">
-                   <Heart size={13} strokeWidth={1.8} />
-                   <span>{post.like_count}</span>
-                 </div>
-                 <div className="pmodal-stat-item">
-                   <MessageSquare size={13} strokeWidth={1.8} />
-                   <span>{post.comment_count}</span>
-                 </div>
+               {/* Status + visibility + tags */}
+               <div className="pmodal-meta-bar">
+                 <span className={`pmodal-status-badge pmodal-status-badge--${post.status}`}>
+                   {post.status === "published" ? "已发布" : "草稿"}
+                 </span>
+                 <span className={`pmodal-visibility-badge ${post.is_public ? "pmodal-visibility-badge--public" : "pmodal-visibility-badge--private"}`}>
+                   {post.is_public ? <><Eye size={10} style={{ marginRight: 3 }} />公开</> : <><EyeOff size={10} style={{ marginRight: 3 }} />仅自己</>}
+                 </span>
+                 {post.tags?.map((t) => <span key={t} className="pmodal-tag">#{t}</span>)}
                </div>
+
+               {/* Divider */}
+               <div className="pmodal-divider" />
 
                {/* Content */}
                <div className="pmodal-content-section">
@@ -171,8 +154,8 @@ export default function PostDetailModal({ postId, onClose, onUpdated }: Props) {
                {post.images.length > 0 && (
                  <div className="pmodal-images-section">
                    <div className="pmodal-images-header">
-                     <ImageIcon size={14} strokeWidth={1.8} />
-                     <span className="pmodal-images-label">图片 {post.images.length} 张</span>
+                     <ImageIcon size={13} strokeWidth={1.8} style={{ flexShrink: 0 }} />
+                     <span>图片 {post.images.length} 张</span>
                    </div>
                    <div className="pmodal-thumb-grid">
                      {post.images.map((img, i) => (
@@ -199,6 +182,18 @@ export default function PostDetailModal({ postId, onClose, onUpdated }: Props) {
                    </div>
                  </div>
                )}
+
+               {/* Footer: stats right-aligned */}
+               <div className="pmodal-footer-stats">
+                 <div className="pmodal-stat-item">
+                   <Heart size={13} strokeWidth={1.8} />
+                   <span>{post.like_count}</span>
+                 </div>
+                 <div className="pmodal-stat-item">
+                   <MessageSquare size={13} strokeWidth={1.8} />
+                   <span>{post.comment_count}</span>
+                 </div>
+               </div>
              </>
            ) : null}
         </div>

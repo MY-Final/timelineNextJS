@@ -66,14 +66,20 @@ export default function PostFilterBar({ filters, onChange }: Props) {
       </select>
 
       {/* 创建时间范围 */}
-      <input className="admin-filter-date" type="date" title="创建时间从" value={filters.created_from} onChange={(e) => set("created_from", e.target.value)} />
-      <span style={{ color: "#c0a0b0", fontSize: 12 }}>—</span>
-      <input className="admin-filter-date" type="date" title="创建时间至" value={filters.created_to} onChange={(e) => set("created_to", e.target.value)} />
+      <div style={{ display: "flex", alignItems: "center", gap: 4, flex: "0 0 auto" }}>
+        <span style={{ fontSize: 11, color: "#a07090", whiteSpace: "nowrap", fontWeight: 500 }}>创建时间</span>
+        <input className="admin-filter-date" type="date" title="创建时间从" value={filters.created_from} onChange={(e) => set("created_from", e.target.value)} />
+        <span style={{ color: "#c0a0b0", fontSize: 12 }}>—</span>
+        <input className="admin-filter-date" type="date" title="创建时间至" value={filters.created_to} onChange={(e) => set("created_to", e.target.value)} />
+      </div>
 
       {/* 实际日期范围 */}
-      <input className="admin-filter-date" type="date" title="实际日期从" value={filters.event_from} onChange={(e) => set("event_from", e.target.value)} placeholder="实际日期从" />
-      <span style={{ color: "#c0a0b0", fontSize: 12 }}>—</span>
-      <input className="admin-filter-date" type="date" title="实际日期至" value={filters.event_to} onChange={(e) => set("event_to", e.target.value)} />
+      <div style={{ display: "flex", alignItems: "center", gap: 4, flex: "0 0 auto" }}>
+        <span style={{ fontSize: 11, color: "#a07090", whiteSpace: "nowrap", fontWeight: 500 }}>实际日期</span>
+        <input className="admin-filter-date" type="date" title="实际日期从" value={filters.event_from} onChange={(e) => set("event_from", e.target.value)} />
+        <span style={{ color: "#c0a0b0", fontSize: 12 }}>—</span>
+        <input className="admin-filter-date" type="date" title="实际日期至" value={filters.event_to} onChange={(e) => set("event_to", e.target.value)} />
+      </div>
 
       {/* 重置 */}
       {dirty && (

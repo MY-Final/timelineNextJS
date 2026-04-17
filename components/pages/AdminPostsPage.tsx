@@ -5,7 +5,7 @@ import AdminLayout from "@/components/pages/AdminLayout";
 import {
   FileText, Plus, Eye, EyeOff, Trash2, Loader2,
   ArrowUp, ArrowDown, Edit3, CheckSquare, Square,
-  BookOpen, BookX,
+  BookOpen, BookX, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import ConfirmDialog, { type ConfirmDialogProps } from "@/components/ui/common/ConfirmDialog";
 import PostDetailModal from "@/components/ui/common/PostDetailModal";
@@ -81,10 +81,14 @@ export default function AdminPostsPage() {
   const [dialog, setDialog] = useState<Omit<ConfirmDialogProps, "onCancel"> | null>(null);
   const [filters, setFilters] = useState<PostFilters>({ ...EMPTY_FILTERS });
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 20;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function buildQuery(f: PostFilters) {
-    const p = new URLSearchParams({ limit: "500" });
+  function buildQuery(f: PostFilters, pg: number) {
+    const p = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(pg) });
     if (f.status)       p.set("status", f.status);
     if (f.is_public)    p.set("is_public", f.is_public);
     if (f.q)            p.set("q", f.q);
@@ -95,14 +99,19 @@ export default function AdminPostsPage() {
     return p.toString();
   }
 
-  const fetchPosts = useCallback(async (f: PostFilters = EMPTY_FILTERS) => {
+  const fetchPosts = useCallback(async (f: PostFilters = EMPTY_FILTERS, pg = 1) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/posts?${buildQuery(f)}`);
+      const res = await fetch(`/api/posts?${buildQuery(f, pg)}`);
       const json = await res.json();
-      if (json.code === 0) setPosts(json.data.list);
-      else setError(json.message || "加载失败");
+      if (json.code === 0) {
+        setPosts(json.data.list);
+        setTotalPages(json.data.pagination.pages || 1);
+        setTotalCount(json.data.pagination.total || 0);
+      } else {
+        setError(json.message || "加载失败");
+      }
     } catch {
       setError("网络异常，请稍后重试");
     } finally {
@@ -110,13 +119,21 @@ export default function AdminPostsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchPosts(filters); }, [fetchPosts]);
+  useEffect(() => { fetchPosts(filters, page); }, [fetchPosts]);
 
   function handleFilterChange(next: PostFilters) {
     setFilters(next);
+    setPage(1);
     setSelectedIds(new Set());
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchPosts(next), 350);
+    debounceRef.current = setTimeout(() => fetchPosts(next, 1), 350);
+  }
+
+  function goToPage(pg: number) {
+    const clamped = Math.max(1, Math.min(pg, totalPages));
+    setPage(clamped);
+    setSelectedIds(new Set());
+    fetchPosts(filters, clamped);
   }
 
   const sortedPosts = useMemo(() => {
@@ -202,7 +219,7 @@ export default function AdminPostsPage() {
       const json = await res.json();
       if (json.code === 0) {
         setSelectedIds(new Set());
-        await fetchPosts(filters);
+        await fetchPosts(filters, page);
       } else {
         confirmDialog({ title: "批量操作失败", message: json.message, confirmText: "好的", danger: false, onConfirm: closeDialog });
       }
@@ -340,16 +357,51 @@ export default function AdminPostsPage() {
             </tbody>
           </table>
         )}
+
+        {/* 分页 */}
+        {!loading && totalPages > 1 && (
+          <div className="admin-pagination">
+            <span className="admin-pagination-info">共 {totalCount} 条，第 {page} / {totalPages} 页</span>
+            <div className="admin-pagination-btns">
+              <button className="admin-action-btn" disabled={page <= 1} onClick={() => goToPage(page - 1)}>
+                <ChevronLeft size={14} strokeWidth={2} />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === "…" ? (
+                    <span key={`ellipsis-${idx}`} className="admin-pagination-ellipsis">…</span>
+                  ) : (
+                    <button
+                      key={item}
+                      className={`admin-action-btn${item === page ? " admin-action-btn--primary" : ""}`}
+                      onClick={() => goToPage(item as number)}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+              <button className="admin-action-btn" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>
+                <ChevronRight size={14} strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {detailId !== null && (
-        <PostDetailModal postId={detailId} onClose={() => setDetailId(null)} onUpdated={() => fetchPosts(filters)} />
+        <PostDetailModal postId={detailId} onClose={() => setDetailId(null)} onUpdated={() => fetchPosts(filters, page)} />
       )}
       {editId !== null && (
-        <EditPostModal postId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); fetchPosts(filters); }} />
+        <EditPostModal postId={editId} onClose={() => setEditId(null)} onSaved={() => { setEditId(null); fetchPosts(filters, page); }} />
       )}
       {showNewPost && (
-        <AdminNewPostModal onClose={() => setShowNewPost(false)} onSuccess={() => { setShowNewPost(false); fetchPosts(filters); }} />
+        <AdminNewPostModal onClose={() => setShowNewPost(false)} onSuccess={() => { setShowNewPost(false); setPage(1); fetchPosts(filters, 1); }} />
       )}
       {dialog && <ConfirmDialog {...dialog} onCancel={closeDialog} />}
     </AdminLayout>
