@@ -1,25 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, TokenPayload } from './jwt';
 
+export const TOKEN_COOKIE = 'token';
+
 /**
- * 从请求头提取并验证 JWT，验证通过返回 payload，否则返回 401 响应。
- * 用法：
- *   const result = getAuthUser(request);
- *   if (result instanceof NextResponse) return result;  // 401
- *   const { userId, role } = result;
+ * 从 Cookie 或 Authorization header 提取并验证 JWT。
+ * Cookie 优先；Postman 等工具可继续用 Bearer token 调试。
  */
 export function getAuthUser(
   request: NextRequest
 ): (TokenPayload & { iat?: number; exp?: number }) | NextResponse {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
+  // 1. 优先读 HttpOnly Cookie
+  let token = request.cookies.get(TOKEN_COOKIE)?.value;
+
+  // 2. 降级到 Authorization header（兼容 Postman / 移动端）
+  if (!token) {
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    }
+  }
+
+  if (!token) {
     return NextResponse.json(
       { success: false, message: '未提供认证 Token' },
       { status: 401 }
     );
   }
 
-  const token = authHeader.slice(7);
   try {
     return verifyToken(token);
   } catch {

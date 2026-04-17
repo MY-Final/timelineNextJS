@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
 export async function GET() {
   const client = await pool.connect().catch((err: Error) => {
@@ -8,21 +8,10 @@ export async function GET() {
 
   try {
     const result = await client.query('SELECT NOW()');
-    return NextResponse.json({
-      success: true,
-      message: '数据库连接成功',
-      data: result.rows[0],
-    });
+    return successResponse(result.rows[0], '数据库连接成功');
   } catch (err) {
     const error = err as Error;
-    return NextResponse.json(
-      {
-        success: false,
-        message: '数据库连接失败',
-        error: error.message,
-      },
-      { status: 500 }
-    );
+    return errorResponse(ResultCode.DB_ERROR, `数据库连接失败：${error.message}`);
   } finally {
     client.release();
   }
