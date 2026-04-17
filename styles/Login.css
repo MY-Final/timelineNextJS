@@ -475,6 +475,14 @@
   padding: 4px 4px;
 }
 
+.login-error {
+  font-size: 13px;
+  color: #c0392b;
+  text-align: center;
+  margin: 0;
+  padding: 2px 0;
+}
+
 @media (prefers-color-scheme: dark) {
   .login-hint { color: #c07090; }
 }

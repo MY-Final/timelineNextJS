@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Heart, KeyRound, Lock, LogIn, User } from "lucide-react";
 import "@/styles/Login.css";
 
@@ -11,11 +12,13 @@ interface PasswordFieldProps {
   label: string;
   placeholder: string;
   autoComplete?: string;
+  value: string;
+  onChange: (v: string) => void;
   show: boolean;
   onToggle: () => void;
 }
 
-function PasswordField({ id, label, placeholder, autoComplete, show, onToggle }: PasswordFieldProps) {
+function PasswordField({ id, label, placeholder, autoComplete, value, onChange, show, onToggle }: PasswordFieldProps) {
   return (
     <div className="login-field">
       <label className="login-label" htmlFor={id}>
@@ -29,6 +32,8 @@ function PasswordField({ id, label, placeholder, autoComplete, show, onToggle }:
           type={show ? "text" : "password"}
           placeholder={placeholder}
           autoComplete={autoComplete ?? "current-password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
         />
         <button
           type="button"
@@ -50,17 +55,120 @@ function PasswordField({ id, label, placeholder, autoComplete, show, onToggle }:
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
+
+  // 显示/隐藏密码
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Reset visibility when switching modes
+  // 登录表单
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+
+  // 修改密码表单
+  const [changeUsername, setChangeUsername] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // 找回密码表单
+  const [forgotUsername, setForgotUsername] = useState("");
+
+  // 全局提示
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   function switchMode(next: Mode) {
     setShowPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
+    setError("");
     setMode(next);
+  }
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!loginUsername || !loginPassword) {
+      setError("账号和密码不能为空");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setError(json.message || "登录失败");
+        return;
+      }
+      localStorage.setItem("token", json.data.token);
+      router.push("/");
+    } catch {
+      setError("网络异常，请稍后重试");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!changeUsername || !currentPassword || !newPassword || !confirmPassword) {
+      setError("所有字段均为必填");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("两次输入的新密码不一致");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError("新密码长度不能少于 6 位");
+      return;
+    }
+
+    // 修改密码需要先登录获取 token
+    setLoading(true);
+    try {
+      // 先用当前账号密码登录取 token
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: changeUsername, password: currentPassword }),
+      });
+      const loginJson = await loginRes.json();
+      if (!loginJson.success) {
+        setError(loginJson.message || "账号或当前密码错误");
+        return;
+      }
+      const token = loginJson.data.token;
+
+      const res = await fetch("/api/auth/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ oldPassword: currentPassword, newPassword }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setError(json.message || "修改失败");
+        return;
+      }
+      // 修改成功后回到登录页
+      switchMode("login");
+      setError(""); // 清除，改为用 success 提示可扩展
+    } catch {
+      setError("网络异常，请稍后重试");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -99,7 +207,7 @@ export default function LoginPage() {
 
           {/* ── LOGIN MODE ── */}
           {mode === "login" && (
-            <form className="login-form" onSubmit={(e) => e.preventDefault()}>
+            <form className="login-form" onSubmit={handleLogin}>
               {/* Username */}
               <div className="login-field">
                 <label className="login-label" htmlFor="login-username">
@@ -116,6 +224,8 @@ export default function LoginPage() {
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
                   />
                 </div>
               </div>
@@ -126,13 +236,17 @@ export default function LoginPage() {
                 label="密码"
                 placeholder="请输入密码"
                 autoComplete="current-password"
+                value={loginPassword}
+                onChange={setLoginPassword}
                 show={showPassword}
                 onToggle={() => setShowPassword((v) => !v)}
               />
 
-              <button type="submit" className="login-btn-primary">
+              {error && <p className="login-error">{error}</p>}
+
+              <button type="submit" className="login-btn-primary" disabled={loading}>
                 <LogIn size={15} strokeWidth={1.8} aria-hidden="true" />
-                登录
+                {loading ? "登录中…" : "登录"}
               </button>
 
               <div className="login-links">
@@ -174,6 +288,8 @@ export default function LoginPage() {
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
+                    value={forgotUsername}
+                    onChange={(e) => setForgotUsername(e.target.value)}
                   />
                 </div>
               </div>
@@ -201,7 +317,7 @@ export default function LoginPage() {
 
           {/* ── CHANGE PASSWORD MODE ── */}
           {mode === "change" && (
-            <form className="login-form" onSubmit={(e) => e.preventDefault()}>
+            <form className="login-form" onSubmit={handleChangePassword}>
               {/* Username */}
               <div className="login-field">
                 <label className="login-label" htmlFor="change-username">
@@ -218,6 +334,8 @@ export default function LoginPage() {
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
+                    value={changeUsername}
+                    onChange={(e) => setChangeUsername(e.target.value)}
                   />
                 </div>
               </div>
@@ -227,6 +345,8 @@ export default function LoginPage() {
                 label="当前密码"
                 placeholder="请输入当前密码"
                 autoComplete="current-password"
+                value={currentPassword}
+                onChange={setCurrentPassword}
                 show={showPassword}
                 onToggle={() => setShowPassword((v) => !v)}
               />
@@ -236,6 +356,8 @@ export default function LoginPage() {
                 label="新密码"
                 placeholder="请输入新密码"
                 autoComplete="new-password"
+                value={newPassword}
+                onChange={setNewPassword}
                 show={showNewPassword}
                 onToggle={() => setShowNewPassword((v) => !v)}
               />
@@ -245,13 +367,17 @@ export default function LoginPage() {
                 label="确认新密码"
                 placeholder="再次输入新密码"
                 autoComplete="new-password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
                 show={showConfirmPassword}
                 onToggle={() => setShowConfirmPassword((v) => !v)}
               />
 
-              <button type="submit" className="login-btn-primary">
+              {error && <p className="login-error">{error}</p>}
+
+              <button type="submit" className="login-btn-primary" disabled={loading}>
                 <KeyRound size={15} strokeWidth={1.8} aria-hidden="true" />
-                确认修改
+                {loading ? "提交中…" : "确认修改"}
               </button>
 
               <div className="login-links">
