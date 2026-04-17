@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Heart, User } from "lucide-react";
+import { BookOpen, Heart, Settings, User } from "lucide-react";
 import ILoveYouDisplay from "@/components/easter-eggs/ILoveYouDisplay";
 import {
   isAnniversary,
@@ -226,6 +226,11 @@ export default function HomePage() {
       </div>
 
       {iLoveYouStage === 4 && <ILoveYouDisplay />}
+
+      <Link href="/admin" className="home-admin-entry" title="控制台">
+        <Settings size={13} strokeWidth={1.8} aria-hidden="true" />
+        控制台
+      </Link>
     </main>
   );
 }

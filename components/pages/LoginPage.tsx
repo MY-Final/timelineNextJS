@@ -108,7 +108,7 @@ export default function LoginPage() {
         return;
       }
       localStorage.setItem("token", json.data.token);
-      router.push("/");
+      router.push("/admin");
     } catch {
       setError("网络异常，请稍后重试");
     } finally {
