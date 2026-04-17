@@ -29,5 +29,11 @@ export const R2_BUCKET = () => {
   return process.env.R2_BUCKET_NAME;
 };
 
-/** 公开访问域名（可选，用于拼接文件 URL） */
-export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL ?? '';
+/** 公开访问域名（可选，用于拼接文件 URL）。自动补全 https:// 协议前缀。 */
+function normalizePublicUrl(raw: string | undefined): string {
+  if (!raw) return '';
+  raw = raw.trim().replace(/\/$/, '');
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+  return `https://${raw}`;
+}
+export const R2_PUBLIC_URL = normalizePublicUrl(process.env.R2_PUBLIC_URL);

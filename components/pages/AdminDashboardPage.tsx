@@ -6,7 +6,7 @@ import { FileText, MessageSquare, Heart, TrendingUp } from "lucide-react";
 const STATS = [
   { label: "帖子总数", value: "—", icon: <FileText size={16} strokeWidth={1.8} /> },
   { label: "评论总数", value: "—", icon: <MessageSquare size={16} strokeWidth={1.8} /> },
-  { label: "点赞总数", value: "—", icon: <Heart size={16} strokeWidth={1.8} fill="currentColor" strokeWidth={0} /> },
+  { label: "点赞总数", value: "—", icon: <Heart size={16} strokeWidth={0} fill="currentColor" /> },
   { label: "今日新增", value: "—", icon: <TrendingUp size={16} strokeWidth={1.8} /> },
 ];
 

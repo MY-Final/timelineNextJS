@@ -6,11 +6,14 @@ import AdminLayout from "@/components/pages/AdminLayout";
 import { Upload, X, Image as ImageIcon, Plus, Loader2 } from "lucide-react";
 import "@/styles/Admin.css";
 
+const MAX_IMAGES = 10;
+
 interface UploadedFile {
   id: string;
   file: File;
   preview: string;
   url?: string;
+  storageKey?: string;
   uploading: boolean;
   error?: string;
 }
@@ -20,10 +23,11 @@ export default function AdminNewPostPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [status, setStatus] = useState<"published" | "draft">("published");
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
-
-  const MAX_IMAGES = 10;
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const addFiles = useCallback((newFiles: FileList | File[]) => {
     setFiles((prev) => {
@@ -55,13 +59,13 @@ export default function AdminNewPostPage() {
     });
   }
 
-  async function uploadFile(item: UploadedFile): Promise<string | null> {
+  async function uploadFile(item: UploadedFile): Promise<{ url: string; storageKey: string } | null> {
     const formData = new FormData();
     formData.append("file", item.file);
     try {
       const res = await fetch("/api/upload/direct", { method: "POST", body: formData });
       const json = await res.json();
-      if (json.code === 0) return json.data.url;
+      if (json.code === 0) return { url: json.data.url, storageKey: json.data.key };
       return null;
     } catch {
       return null;
@@ -71,32 +75,66 @@ export default function AdminNewPostPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
+    setSubmitError("");
+    setSubmitting(true);
 
-    // Upload all files
-    setFiles((prev) => prev.map((f) => ({ ...f, uploading: true })));
+    // 1. 上传所有图片
+    setFiles((prev) => prev.map((f) => ({ ...f, uploading: true, error: undefined })));
 
-    const results = await Promise.all(
+    const uploadResults = await Promise.all(
       files.map(async (f) => {
-        const url = await uploadFile(f);
-        return { id: f.id, url };
+        const result = await uploadFile(f);
+        return { id: f.id, file: f.file, result };
       })
     );
 
     setFiles((prev) =>
       prev.map((f) => {
-        const r = results.find((x) => x.id === f.id);
-        return { ...f, uploading: false, url: r?.url ?? undefined, error: r?.url ? undefined : "上传失败" };
+        const r = uploadResults.find((x) => x.id === f.id);
+        return {
+          ...f,
+          uploading: false,
+          url: r?.result?.url,
+          storageKey: r?.result?.storageKey,
+          error: r?.result ? undefined : "上传失败",
+        };
       })
     );
 
-    const failedCount = results.filter((r) => !r.url).length;
-    if (failedCount > 0) return; // 有失败的不提交
+    const failed = uploadResults.filter((r) => !r.result);
+    if (failed.length > 0) {
+      setSubmitError(`${failed.length} 张图片上传失败，请移除后重试`);
+      setSubmitting(false);
+      return;
+    }
 
-    // TODO: 提交帖子到后端 API
-    const uploadedUrls = results.map((r) => r.url).filter(Boolean);
-    console.log("Post data:", { title, content, images: uploadedUrls });
-    alert("所有图片上传成功！帖子功能待接入后端。");
-    router.push("/admin/posts");
+    // 2. 创建帖子
+    const images = uploadResults.map((r, i) => ({
+      url: r.result!.url,
+      storage_key: r.result!.storageKey,
+      original_name: r.file.name,
+      mime_type: r.file.type,
+      file_size: r.file.size,
+      sort_order: i,
+    }));
+
+    try {
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), content: content.trim(), status, images }),
+      });
+      const json = await res.json();
+      if (json.code !== 0) {
+        setSubmitError(json.message || "发布失败");
+        setSubmitting(false);
+        return;
+      }
+      router.push("/admin/posts");
+    } catch {
+      setSubmitError("网络异常，请稍后重试");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -132,6 +170,21 @@ export default function AdminNewPostPage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
+        </div>
+
+        {/* 状态 */}
+        <div className="admin-form-field">
+          <label className="admin-form-label">发布状态</label>
+          <div className="admin-form-radio-group">
+            <label className="admin-form-radio">
+              <input type="radio" name="status" value="published" checked={status === "published"} onChange={() => setStatus("published")} />
+              <span>立即发布</span>
+            </label>
+            <label className="admin-form-radio">
+              <input type="radio" name="status" value="draft" checked={status === "draft"} onChange={() => setStatus("draft")} />
+              <span>保存为草稿</span>
+            </label>
+          </div>
         </div>
 
         {/* 图片上传区 */}
@@ -188,11 +241,19 @@ export default function AdminNewPostPage() {
           )}
         </div>
 
+        {/* 错误提示 */}
+        {submitError && (
+          <p style={{ color: "#d44040", fontSize: 13, margin: "0 0 12px" }}>{submitError}</p>
+        )}
+
         {/* 提交 */}
         <div className="admin-form-actions">
-          <button type="button" className="admin-action-btn" onClick={() => router.push("/admin/posts")}>取消</button>
-          <button type="submit" className="admin-action-btn admin-action-btn--primary">
-            发布帖子
+          <button type="button" className="admin-action-btn" onClick={() => router.push("/admin/posts")} disabled={submitting}>
+            取消
+          </button>
+          <button type="submit" className="admin-action-btn admin-action-btn--primary" disabled={submitting}>
+            {submitting ? <Loader2 size={14} className="admin-upload-spin" style={{ marginRight: 6 }} /> : null}
+            {status === "draft" ? "保存草稿" : "发布帖子"}
           </button>
         </div>
       </form>
