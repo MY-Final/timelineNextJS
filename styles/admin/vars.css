@@ -1,0 +1,103 @@
+/* =====================================================
+   Admin Design Tokens — CSS Custom Properties
+   All admin styles reference these variables.
+   Dark mode is handled here once; components don't
+   need their own @media (prefers-color-scheme: dark).
+   ===================================================== */
+
+:root {
+  /* ── Brand / Pink scale ── */
+  --pk-300: #f4b8cb;
+  --pk-400: #e07098;
+  --pk-500: #d45c80;   /* primary action */
+  --pk-600: #b03060;   /* hover */
+  --pk-700: #8b1a3a;   /* active / pressed */
+  --pk-900: #4a1530;   /* headings */
+
+  /* ── Text ── */
+  --text-base:      #3d1a28;
+  --text-heading:   #5a2038;
+  --text-secondary: #7a3a52;
+  --text-muted:     #b07090;
+  --text-faint:     rgba(180, 100, 140, 0.55);
+
+  /* ── Surfaces (opaque-enough for readability) ── */
+  --surface-page:    #fdf4f7;
+  --surface-panel:   rgba(255, 248, 251, 0.75);
+  --surface-card:    rgba(255, 248, 251, 0.80);
+  --surface-sidebar: rgba(255, 248, 251, 0.85);
+  --surface-header:  rgba(255, 248, 251, 0.75);
+  --surface-modal:   rgba(255, 248, 252, 0.92);
+  --surface-input:   rgba(255, 252, 254, 0.80);
+  --surface-upload:  rgba(255, 245, 248, 0.50);
+
+  /* ── Borders ── */
+  --border:       rgba(230, 190, 205, 0.50);
+  --border-soft:  rgba(230, 190, 205, 0.35);
+  --border-modal: rgba(230, 190, 210, 0.55);
+  --border-input: rgba(230, 190, 205, 0.50);
+
+  /* ── Shadows ── */
+  --shadow-panel:  0 4px 24px rgba(180, 60, 90, 0.06);
+  --shadow-modal:  0 24px 60px rgba(80, 20, 40, 0.22);
+  --shadow-dialog: 0 20px 50px rgba(60, 10, 30, 0.20);
+  --shadow-sidebar: 2px 0 20px rgba(180, 60, 90, 0.06);
+
+  /* ── Radius ── */
+  --radius-sm:   7px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   16px;
+  --radius-2xl:  20px;
+  --radius-full: 9999px;
+
+  /* ── Transitions ── */
+  --t-fast: 0.15s;
+  --t-base: 0.18s;
+
+  /* ── Blur levels ── */
+  --blur-sm:  blur(12px);
+  --blur-md:  blur(18px);
+  --blur-lg:  blur(24px);
+  --blur-xl:  blur(28px);
+
+  /* ── Status badge colours ── */
+  --badge-published-bg:    rgba(130, 200, 150, 0.20);
+  --badge-published-color: #2a7a40;
+  --badge-published-border: rgba(100, 180, 120, 0.40);
+  --badge-draft-bg:    rgba(200, 200, 200, 0.20);
+  --badge-draft-color: #666;
+  --badge-draft-border: rgba(180, 180, 180, 0.40);
+  --badge-deleted-bg:    rgba(220, 100, 100, 0.15);
+  --badge-deleted-color: #a03030;
+  --badge-deleted-border: rgba(200, 100, 100, 0.35);
+}
+
+/* ── Dark mode: override tokens only ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-base:      #f0dde5;
+    --text-heading:   #f4c8d8;
+    --text-secondary: #d4a0b4;
+    --text-muted:     #a07090;
+
+    --surface-page:    #130d10;
+    --surface-panel:   rgba(25, 12, 18, 0.70);
+    --surface-card:    rgba(28, 14, 20, 0.70);
+    --surface-sidebar: rgba(25, 15, 20, 0.88);
+    --surface-header:  rgba(20, 12, 16, 0.75);
+    --surface-modal:   rgba(25, 12, 18, 0.92);
+    --surface-input:   rgba(30, 18, 24, 0.80);
+    --surface-upload:  rgba(30, 18, 24, 0.40);
+
+    --border:       rgba(100, 40, 60, 0.40);
+    --border-soft:  rgba(100, 40, 60, 0.25);
+    --border-modal: rgba(100, 40, 60, 0.40);
+    --border-input: rgba(100, 40, 60, 0.40);
+
+    --badge-published-bg:    rgba(60, 160, 100, 0.20);
+    --badge-published-color: #80e0b0;
+    --badge-draft-bg:    rgba(160, 140, 60, 0.20);
+    --badge-draft-color: #d4c070;
+  }
+}

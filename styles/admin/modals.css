@@ -1,0 +1,353 @@
+/* =====================================================
+   Admin — Modals: PostDetail · NewPost/Edit · ConfirmDialog
+   All three share a common "glass panel" pattern;
+   only z-index and sizing differ.
+   ===================================================== */
+
+/* ── Shared backdrop ── */
+.pmodal-backdrop,
+.npost-backdrop,
+.cdialog-backdrop {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.pmodal-backdrop { background: rgba(40, 10, 20, 0.50); z-index: 200; }
+.npost-backdrop  { background: rgba(25, 8, 15, 0.40);  z-index: 200; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.cdialog-backdrop{ background: rgba(30, 8, 16, 0.45);  z-index: 300; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+/* ── Shared panel base ── */
+.pmodal-panel,
+.npost-panel,
+.cdialog-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface-modal);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border-modal);
+}
+.pmodal-panel {
+  width: min(680px, 94vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  z-index: 201;
+  box-shadow: var(--shadow-modal);
+}
+.npost-panel {
+  width: min(660px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 201;
+  box-shadow: 0 20px 56px rgba(80, 20, 40, 0.20);
+  backdrop-filter: var(--blur-xl);
+  -webkit-backdrop-filter: var(--blur-xl);
+}
+.cdialog-panel {
+  width: min(360px, 90vw);
+  z-index: 301;
+  box-shadow: var(--shadow-dialog);
+  padding: 28px 24px 22px;
+  text-align: center;
+}
+
+/* Scrollbar */
+.pmodal-panel::-webkit-scrollbar,
+.npost-panel::-webkit-scrollbar { width: 5px; }
+.pmodal-panel::-webkit-scrollbar-thumb,
+.npost-panel::-webkit-scrollbar-thumb { background: rgba(210, 130, 165, 0.4); border-radius: 3px; }
+
+/* ── Shared sticky header ── */
+.pmodal-header,
+.npost-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  position: sticky;
+  top: 0;
+  background: var(--surface-modal);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+}
+.pmodal-header-title,
+.npost-header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #7c3050;
+}
+.npost-header-title { display: flex; align-items: center; }
+
+/* Body */
+.pmodal-body,
+.npost-body { padding: 20px; }
+
+/* Close button (shared shape) */
+.pmodal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(220, 160, 185, 0.20);
+  color: #8a4060;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.pmodal-close:hover { background: rgba(220, 160, 185, 0.40); }
+
+/* Edit button */
+.pmodal-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 92, 128, 0.25);
+  background: rgba(212, 92, 128, 0.08);
+  color: var(--pk-600);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.pmodal-edit:hover {
+  background: rgba(212, 92, 128, 0.15);
+  border-color: rgba(212, 92, 128, 0.45);
+  color: var(--pk-700);
+}
+
+/* ── Post detail: meta & content ── */
+.pmodal-meta-top { margin-bottom: 6px; }
+.pmodal-status-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Status / visibility badges */
+.pmodal-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+}
+.pmodal-status-badge--published {
+  background: rgba(130, 200, 150, 0.18);
+  color: #2a7a50;
+  border-color: rgba(100, 180, 120, 0.35);
+}
+.pmodal-status-badge--draft {
+  background: rgba(200, 200, 200, 0.18);
+  color: #666;
+  border-color: rgba(180, 180, 180, 0.35);
+}
+.pmodal-visibility-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.pmodal-visibility-badge--public {
+  background: rgba(100, 180, 220, 0.15);
+  color: #2a6a8a;
+  border: 1px solid rgba(80, 160, 200, 0.35);
+}
+.pmodal-visibility-badge--private {
+  background: rgba(160, 120, 100, 0.15);
+  color: #8a5a40;
+  border: 1px solid rgba(140, 100, 80, 0.35);
+}
+
+.pmodal-title { font-size: 18px; font-weight: 700; color: var(--pk-900); margin: 0 0 10px; line-height: 1.4; }
+.pmodal-meta-date,
+.pmodal-meta-author { font-size: 11px; color: #a07090; align-self: center; }
+
+/* Tags */
+.pmodal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.pmodal-tag {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(210, 140, 175, 0.15);
+  color: #8a4060;
+  border: 1px solid rgba(210, 140, 175, 0.35);
+}
+
+/* Stats row */
+.pmodal-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(230, 190, 210, 0.25);
+}
+.pmodal-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c3050;
+}
+
+/* Content */
+.pmodal-content-section { margin-bottom: 18px; }
+.pmodal-content-label,
+.pmodal-images-label {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.pmodal-content {
+  font-size: 14px;
+  color: #5a2a40;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pmodal-empty { opacity: 0.4; }
+
+/* Images */
+.pmodal-images,
+.pmodal-images-section { margin-top: 4px; }
+.pmodal-images-header { display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
+
+/* Shared thumb grid */
+.pmodal-thumb-grid,
+.npost-thumb-grid {
+  display: grid;
+  gap: 8px;
+}
+.pmodal-thumb-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+.npost-thumb-grid {
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  margin-top: 10px;
+}
+
+/* Shared thumb button */
+.pmodal-thumb-btn,
+.npost-thumb-item {
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: rgba(220, 160, 185, 0.12);
+}
+.pmodal-thumb-btn {
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color var(--t-fast), transform var(--t-fast);
+  padding: 0;
+}
+.pmodal-thumb-btn:hover { border-color: rgba(200, 100, 150, 0.6); transform: scale(1.04); }
+.npost-thumb-item { position: relative; border: 1.5px solid rgba(220, 160, 185, 0.30); }
+
+/* Thumb media */
+.pmodal-thumb-img,
+.npost-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pmodal-thumb-video,
+.npost-thumb-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: #c080a0;
+}
+
+/* npost-specific thumbnail pieces */
+.npost-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 240, 248, 0.70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pk-500);
+}
+.npost-thumb-overlay--error { background: rgba(255, 230, 230, 0.75); color: #d44040; font-weight: 700; font-size: 16px; }
+.npost-thumb-remove {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(40, 10, 20, 0.65);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--t-fast);
+  padding: 0;
+}
+.npost-thumb-remove:hover { background: rgba(180, 20, 50, 0.80); }
+.npost-thumb-add {
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed rgba(200, 130, 160, 0.55);
+  background: rgba(220, 160, 185, 0.07);
+  color: #c080a0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.npost-thumb-add:hover { background: rgba(220, 160, 185, 0.15); border-color: rgba(200, 100, 145, 0.70); color: #a05070; }
+
+/* Sticky footer (npost) */
+.npost-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  position: sticky;
+  bottom: 0;
+  background: var(--surface-modal);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+}
+
+/* Loading & error */
+.pmodal-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  justify-content: center;
+}
+.pmodal-error { padding: 20px; color: #d44040; font-size: 13px; text-align: center; }
+
+/* ── ConfirmDialog ── */
+.cdialog-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  margin-bottom: 14px;
+  background: rgba(220, 160, 185, 0.15);
+  color: var(--text-muted);
+}
+.cdialog-icon-wrap[data-danger="true"] { background: rgba(220, 80, 80, 0.12); color: #c03050; }
+.cdialog-title { font-size: 15px; font-weight: 700; color: var(--pk-900); margin: 0 0 8px; line-height: 1.4; }
+.cdialog-message { font-size: 13px; color: #7a4060; margin: 0 0 20px; line-height: 1.6; }
+.cdialog-actions { display: flex; gap: 10px; justify-content: center; }
+.cdialog-cancel,
+.cdialog-confirm { min-width: 80px; }
