@@ -101,8 +101,8 @@ export default function PostDetailModal({ postId, onClose, onUpdated }: Props) {
           <span className="pmodal-header-title">帖子详情</span>
           <div style={{ display: "flex", gap: 6 }}>
             {post && (
-              <button className="pmodal-close" onClick={() => setShowEdit(true)} aria-label="编辑" title="编辑帖子">
-                <Edit3 size={14} strokeWidth={1.8} />
+              <button className="pmodal-edit" onClick={() => setShowEdit(true)} aria-label="编辑" title="编辑帖子">
+                <Edit3 size={15} strokeWidth={1.8} />
               </button>
             )}
             <button className="pmodal-close" onClick={onClose} aria-label="关闭">
@@ -120,80 +120,84 @@ export default function PostDetailModal({ postId, onClose, onUpdated }: Props) {
             </div>
           ) : error ? (
             <p className="pmodal-error">{error}</p>
-          ) : post ? (
-            <>
-              {/* Meta row */}
-              <div className="pmodal-meta">
-                <span className={`admin-badge admin-badge--${post.status}`}>
-                  {post.status === "published" ? "已发布" : "草稿"}
-                </span>
-                <span className={`admin-badge ${post.is_public ? "admin-badge--published" : "admin-badge--draft"}`}>
-                  {post.is_public
-                    ? <><Eye size={10} style={{ verticalAlign: "middle", marginRight: 3 }} />公开</>
-                    : <><EyeOff size={10} style={{ verticalAlign: "middle", marginRight: 3 }} />隐藏</>
-                  }
-                </span>
-                <span className="pmodal-meta-item pmodal-meta-icon">
-                  <Heart size={11} strokeWidth={1.8} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                  {post.like_count}
-                </span>
-                <span className="pmodal-meta-item pmodal-meta-icon">
-                  <MessageSquare size={11} strokeWidth={1.8} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                  {post.comment_count}
-                </span>
-                <span className="pmodal-meta-date">{post.created_at.slice(0, 10)}</span>
-                <span className="pmodal-meta-author">by {post.author_nickname || post.author_username}</span>
-              </div>
+           ) : post ? (
+             <>
+               {/* Meta row - status & visibility badges */}
+               <div className="pmodal-meta-top">
+                 <div className="pmodal-status-row">
+                   <span className={`pmodal-status-badge pmodal-status-badge--${post.status}`}>
+                     {post.status === "published" ? "已发布" : "草稿"}
+                   </span>
+                   <span className={`pmodal-visibility-badge ${post.is_public ? "pmodal-visibility-badge--public" : "pmodal-visibility-badge--private"}`}>
+                     {post.is_public ? <><Eye size={10} style={{ marginRight: 3 }} />公开</> : <><EyeOff size={10} style={{ marginRight: 3 }} />仅自己</>}
+                   </span>
+                 </div>
+               </div>
 
-              {/* Title */}
-              {post.title && <h2 className="pmodal-title">{post.title}</h2>}
+               {/* Title */}
+               {post.title && <h2 className="pmodal-title">{post.title}</h2>}
 
-              {/* Tags */}
-              {post.tags?.length > 0 && (
-                <div className="pmodal-tags">
-                  {post.tags.map((t) => <span key={t} className="pmodal-tag">#{t}</span>)}
-                </div>
-              )}
+               {/* Tags */}
+               {post.tags?.length > 0 && (
+                 <div className="pmodal-tags">
+                   {post.tags.map((t) => <span key={t} className="pmodal-tag">#{t}</span>)}
+                 </div>
+               )}
 
-              {/* Content */}
-              <div className="pmodal-content">
-                {post.content || <span style={{ opacity: 0.4 }}>（无内容）</span>}
-              </div>
+               {/* Stats row */}
+               <div className="pmodal-stats-row">
+                 <div className="pmodal-stat-item">
+                   <Heart size={13} strokeWidth={1.8} />
+                   <span>{post.like_count}</span>
+                 </div>
+                 <div className="pmodal-stat-item">
+                   <MessageSquare size={13} strokeWidth={1.8} />
+                   <span>{post.comment_count}</span>
+                 </div>
+               </div>
 
-              {/* Images */}
-              {post.images.length > 0 && (
-                <div className="pmodal-images">
-                  <p className="pmodal-images-label">
-                    <ImageIcon size={13} strokeWidth={1.8} style={{ marginRight: 4 }} />
-                    图片 ({post.images.length})
-                  </p>
-                  <div className="pmodal-thumb-grid">
-                    {post.images.map((img, i) => (
-                      <button
-                        key={img.id}
-                        className="pmodal-thumb-btn"
-                        onClick={() => setLightboxIndex(i)}
-                        aria-label={`预览第 ${i + 1} 张图片`}
-                      >
-                        {img.mime_type?.startsWith("image/") !== false ? (
-                          <img
-                            src={ensureHttps(img.url)}
-                            alt={img.original_name}
-                            className="pmodal-thumb-img"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="pmodal-thumb-video">
-                            <ImageIcon size={18} />
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          ) : null}
+               {/* Content */}
+               <div className="pmodal-content-section">
+                 <div className="pmodal-content-label">正文内容</div>
+                 <div className="pmodal-content">
+                   {post.content || <span className="pmodal-empty">（无内容）</span>}
+                 </div>
+               </div>
+
+               {/* Images */}
+               {post.images.length > 0 && (
+                 <div className="pmodal-images-section">
+                   <div className="pmodal-images-header">
+                     <ImageIcon size={14} strokeWidth={1.8} />
+                     <span className="pmodal-images-label">图片 {post.images.length} 张</span>
+                   </div>
+                   <div className="pmodal-thumb-grid">
+                     {post.images.map((img, i) => (
+                       <button
+                         key={img.id}
+                         className="pmodal-thumb-btn"
+                         onClick={() => setLightboxIndex(i)}
+                         aria-label={`预览第 ${i + 1} 张图片`}
+                       >
+                         {img.mime_type?.startsWith("image/") !== false ? (
+                           <img
+                             src={ensureHttps(img.url)}
+                             alt={img.original_name}
+                             className="pmodal-thumb-img"
+                             loading="lazy"
+                           />
+                         ) : (
+                           <div className="pmodal-thumb-video">
+                             <ImageIcon size={18} />
+                           </div>
+                         )}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+               )}
+             </>
+           ) : null}
         </div>
       </div>
 
