@@ -1,0 +1,66 @@
+/* =====================================================
+   Easter Eggs — Input Indicators (Konami + I Love You)
+   ===================================================== */
+
+/* ---------- Konami code indicator ---------- */
+.konami-indicator {
+  display: flex;
+  gap: 4px;
+  z-index: 100;
+  pointer-events: none;
+  margin-bottom: 12px;
+  animation: indicator-appear 0.25s ease-out;
+}
+.konami-key {
+  min-width: 22px; height: 20px;
+  padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(251, 113, 133, 0.3);
+  border-radius: 4px;
+  font-size: 9px; font-weight: 600;
+  color: #e2a0b0;
+  backdrop-filter: blur(8px);
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+.konami-key.pressed {
+  background: #fb7185; color: white;
+  transform: scale(1.08); border-color: #fb7185;
+}
+@media (prefers-color-scheme: dark) {
+  .konami-key { background: rgba(26, 10, 16, 0.6); }
+}
+
+/* ---------- I Love You indicator ---------- */
+.ilove-you-indicator {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(251, 113, 133, 0.25);
+  border-radius: 25px;
+  padding: 7px 14px;
+  box-shadow: 0 4px 16px rgba(251, 113, 133, 0.12);
+  z-index: 100;
+  font-size: 13px; font-weight: 500;
+  color: #e2a0b0;
+  animation: indicator-appear 0.25s ease-out;
+  margin-bottom: 12px;
+}
+.ilove-you-text { color: #fb7185; font-weight: 600; margin-right: 4px; }
+.ilove-you-char {
+  display: inline-block; width: 12px; text-align: center;
+  color: #d1d5db;
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+.ilove-you-char.typed { color: #fb7185; transform: scale(1.1); font-weight: 700; }
+
+@keyframes indicator-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-color-scheme: dark) {
+  .ilove-you-indicator {
+    background: rgba(26, 10, 16, 0.8);
+    border-color: rgba(159, 18, 57, 0.4);
+  }
+}

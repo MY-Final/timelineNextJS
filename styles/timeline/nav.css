@@ -1,0 +1,127 @@
+/* =====================================================
+   Timeline — Side Navigation · Hero Nav Buttons
+   ===================================================== */
+
+/* ---------- Side nav (mobile: bottom bar) ---------- */
+.side-nav {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(253, 164, 175, 0.3);
+  border-radius: 40px;
+  padding: 10px 18px;
+  box-shadow: 0 4px 20px rgba(251, 113, 133, 0.12);
+  max-width: calc(100vw - 48px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.side-nav::-webkit-scrollbar { display: none; }
+.side-nav .side-nav-label { display: none; }
+
+/* Desktop: vertical right rail */
+@media (min-width: 1024px) {
+  .side-nav {
+    right: 28px; left: auto; bottom: auto; top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    gap: 20px;
+    background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    border: none; border-radius: 0; padding: 0; box-shadow: none;
+  }
+  .side-nav .side-nav-label { display: inline; }
+}
+@media (prefers-color-scheme: dark) {
+  @media (max-width: 1023px) {
+    .side-nav {
+      background: rgba(26, 10, 16, 0.8);
+      border-color: rgba(159, 18, 57, 0.35);
+    }
+  }
+}
+
+.side-nav-item {
+  display: flex; align-items: center; gap: 12px;
+  background: none; border: none; cursor: pointer; padding: 4px; outline: none;
+}
+.side-nav-label {
+  font-size: 10px; letter-spacing: .15em; font-weight: 600;
+  color: transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+.side-nav-item.active .side-nav-label { color: var(--rose-300); }
+.side-nav-item:hover .side-nav-label  { color: var(--rose-200); }
+
+.side-nav-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--rose-100);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+.side-nav-item.active .side-nav-dot {
+  background: var(--rose-300);
+  transform: scale(1.4);
+  box-shadow: 0 0 0 4px rgba(251,113,133,.15), 0 0 12px rgba(251,113,133,.3);
+}
+.side-nav-item:hover .side-nav-dot {
+  background: var(--rose-200);
+  transform: scale(1.2);
+}
+
+/* ---------- Hero nav buttons (fixed corners) ---------- */
+.hero-nav-btn {
+  position: fixed !important;
+  z-index: 100;
+  display: inline-flex; flex-direction: row; align-items: center; gap: 4px;
+  padding: 4px 8px;
+  background: transparent; border: none;
+  color: var(--muted);
+  font-size: 11px; letter-spacing: .15em; font-weight: 500; text-transform: uppercase;
+  text-decoration: none; cursor: pointer; outline: none;
+  transition: color 0.25s ease, transform 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.hero-nav-btn::after {
+  content: "";
+  position: absolute; bottom: 0; left: 0;
+  width: 100%; height: 1px;
+  background: var(--muted);
+  transform: scaleX(0); transform-origin: left center;
+  transition: transform 0.25s ease;
+}
+.hero-nav-btn:hover::after,
+.hero-nav-btn:focus-visible::after { transform: scaleX(1); }
+.hero-nav-btn:hover,
+.hero-nav-btn:focus-visible { background: none !important; color: var(--rose-300); transform: translateY(-2px); }
+.hero-nav-btn:focus { outline: none; }
+@media (hover: none) {
+  .hero-nav-btn:hover { color: var(--muted); transform: none; }
+  .hero-nav-btn:hover::after { transform: scaleX(0); }
+  .hero-nav-btn:active { color: var(--rose-300); }
+}
+@media (prefers-color-scheme: dark) {
+  .hero-nav-btn { color: #9a6075; }
+  .hero-nav-btn::after { background: #9a6075; }
+  .hero-nav-btn:hover, .hero-nav-btn:focus-visible { color: var(--rose-300); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-nav-btn { transition: none; transform: none !important; }
+  .hero-nav-btn::after { transition: none; }
+}
+
+/* Placement */
+.hero-back        { top: 24px; left: 28px; }
+.hero-sort-toggle { top: 24px; right: 28px; }
+.hero-tag-link    { top: 68px; right: 28px; }

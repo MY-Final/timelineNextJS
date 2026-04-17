@@ -1,0 +1,131 @@
+/* =====================================================
+   Login — Button · Links · Hints · Bottom · Responsive
+   ===================================================== */
+
+/* ---------- Primary button ---------- */
+.login-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px 24px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, var(--rose-300) 0%, var(--rose-400) 55%, var(--rose-500) 100%);
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--serif);
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.38), 0 1px 3px rgba(244, 63, 94, 0.25);
+  transition: filter 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+  margin-top: 4px;
+}
+.login-btn-primary:hover {
+  filter: brightness(1.08) saturate(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(244, 63, 94, 0.45), 0 2px 8px rgba(244, 63, 94, 0.3);
+}
+.login-btn-primary:active {
+  transform: translateY(0) scale(0.98);
+  filter: brightness(0.96);
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.25);
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+@media (prefers-color-scheme: dark) {
+  .login-btn-primary {
+    background: linear-gradient(135deg, var(--rose-400) 0%, var(--rose-500) 100%);
+    box-shadow: 0 4px 20px rgba(244, 63, 94, 0.3);
+  }
+}
+
+/* ---------- Links row ---------- */
+.login-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.login-link {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #994466;
+  cursor: pointer;
+  font-family: var(--sans);
+  border-radius: 6px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.login-link:hover {
+  color: var(--rose-500);
+  background: rgba(251, 113, 133, 0.08);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.login-link:focus-visible { outline: 2px solid rgba(251, 113, 133, 0.5); outline-offset: 2px; }
+@media (prefers-color-scheme: dark) {
+  .login-link { color: #c07090; }
+  .login-link:hover { color: var(--rose-300); }
+}
+.login-link-sep { color: rgba(153, 68, 102, 0.35); font-size: 14px; user-select: none; pointer-events: none; }
+
+/* ---------- Hint / error text ---------- */
+.login-hint {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #7a3a52;
+  text-align: center;
+  margin: 0;
+  padding: 4px 4px;
+}
+.login-error { font-size: 13px; color: #c0392b; text-align: center; margin: 0; padding: 2px 0; }
+@media (prefers-color-scheme: dark) {
+  .login-hint { color: #c07090; }
+}
+
+/* ---------- Bottom tagline ---------- */
+.login-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 24px;
+  width: 100%;
+}
+.login-tagline { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.login-tagline-text {
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: rgba(180, 100, 130, 0.75);
+  font-style: italic;
+  margin: 0;
+  font-family: var(--serif);
+}
+.login-tagline-line {
+  width: 1px; height: 50px;
+  background: linear-gradient(to bottom, rgba(253, 164, 175, 0.55), transparent);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .login-heart-icon { animation: none; }
+  .login-orb-1, .login-orb-2, .login-orb-3 { animation: none; }
+  .login-btn-primary { transition: none; }
+  .login-input:focus { animation: none; }
+  .login-eye-icon { transition: none; }
+}
+
+/* ---------- Mobile ≤480px ---------- */
+@media (max-width: 480px) {
+  .login-center          { padding: 0 16px; }
+  .login-card            { padding: 28px 20px 22px; border-radius: 16px; }
+  .login-badge-line      { height: 44px; }
+  .login-tagline-line    { height: 36px; }
+  .login-orb-1           { width: 240px; height: 240px; }
+  .login-orb-2           { width: 180px; height: 180px; }
+  .login-orb-3           { display: none; }
+  .login-link            { padding: 10px 14px; }
+}

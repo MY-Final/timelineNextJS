@@ -1,0 +1,144 @@
+/* =====================================================
+   Login — Shell · Orbs · Top Badge
+   ===================================================== */
+
+.login-shell {
+  min-height: 100svh;
+  width: 100%;
+  display: grid;
+  grid-template-rows: min-content 1fr min-content;
+  align-items: center;
+  justify-items: center;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(255, 182, 193, 0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(255, 182, 193, 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 80% at 50% 50%, var(--page-bg) 0%, var(--page-bg-2) 100%);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark) {
+  .login-shell {
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(180, 60, 90, 0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 90%, rgba(180, 60, 90, 0.14) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 80% at 50% 50%, var(--page-dark-bg) 0%, var(--page-dark-bg-2) 100%);
+  }
+}
+
+/* ---------- Orbs ---------- */
+.login-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+}
+.login-orb-1 {
+  width: 500px; height: 500px;
+  top: -120px; left: -140px;
+  background: radial-gradient(circle, rgba(255, 182, 193, 0.35) 0%, transparent 70%);
+  animation: login-orb-drift-1 18s ease-in-out infinite;
+}
+.login-orb-2 {
+  width: 380px; height: 380px;
+  bottom: -80px; right: -100px;
+  background: radial-gradient(circle, rgba(251, 113, 133, 0.22) 0%, transparent 70%);
+  animation: login-orb-drift-2 22s ease-in-out infinite;
+}
+.login-orb-3 {
+  width: 280px; height: 280px;
+  top: 40%; left: 60%;
+  background: radial-gradient(circle, rgba(253, 164, 175, 0.18) 0%, transparent 70%);
+  animation: login-orb-drift-3 26s ease-in-out infinite;
+}
+@keyframes login-orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, 30px) scale(1.06); }
+  66%       { transform: translate(-20px, 50px) scale(0.96); }
+}
+@keyframes login-orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(-50px, -30px) scale(1.08); }
+  70%       { transform: translate(20px, -50px) scale(0.94); }
+}
+@keyframes login-orb-drift-3 {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(-60px, 40px); }
+}
+
+/* ---------- Top badge ---------- */
+.login-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 24px;
+  width: 100%;
+}
+.login-date-badge { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.login-badge-line {
+  width: 1px; height: 60px;
+  background: linear-gradient(to bottom, transparent, rgba(253, 164, 175, 0.6));
+}
+.login-badge-text {
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: #c96e88;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin: 0;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  .login-badge-text { color: #c07090; }
+}
+
+/* ---------- Center wrapper ---------- */
+.login-center {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+/* ---------- Heart icon ---------- */
+.login-icon-wrap { margin-bottom: 18px; }
+.login-heart-icon {
+  color: var(--rose-300);
+  filter: drop-shadow(0 0 10px rgba(251, 113, 133, 0.55));
+  animation: login-heartbeat 1.8s ease-in-out infinite;
+}
+@keyframes login-heartbeat {
+  0%, 100% { transform: scale(1); }
+  15%       { transform: scale(1.22); }
+  30%       { transform: scale(1.05); }
+  45%       { transform: scale(1.18); }
+  60%       { transform: scale(1); }
+}
+
+/* ---------- Title / subtitle ---------- */
+.login-title {
+  font-size: clamp(22px, 4vw, 28px);
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  color: var(--text-h);
+  font-family: var(--serif);
+  margin: 0 0 8px;
+  text-align: center;
+}
+.login-subtitle {
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: #a05570;
+  font-weight: 400;
+  margin: 0 0 32px;
+  text-align: center;
+  line-height: 1.6;
+}
+@media (prefers-color-scheme: dark) {
+  .login-subtitle { color: #c07090; }
+}

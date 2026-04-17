@@ -1,0 +1,199 @@
+/* =====================================================
+   Home — Hero Content: Avatar · Couple · Days · HMS
+   ===================================================== */
+
+/* ---------- Center wrapper ---------- */
+.home-center {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: 720px;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+/* ---------- Page title ---------- */
+.home-title {
+  font-size: clamp(13px, 1.5vw, 15px);
+  letter-spacing: 0.55em;
+  color: var(--muted);
+  font-weight: 400;
+  text-transform: uppercase;
+  margin: 0 0 48px;
+  font-family: var(--serif);
+}
+
+/* ---------- Couple section ---------- */
+.couple-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  max-width: 460px;
+  margin-bottom: 60px;
+}
+.avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+/* Avatar frame with spinning conic ring */
+.avatar-frame {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  cursor: default;
+}
+.avatar-frame::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    rgba(253, 164, 175, 0.6) 25%,
+    rgba(251, 113, 133, 0.8) 50%,
+    rgba(253, 164, 175, 0.6) 75%,
+    transparent 100%
+  );
+  animation: ring-spin 8s linear infinite;
+}
+.avatar-frame::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: var(--page-bg);
+}
+@keyframes ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@media (prefers-color-scheme: dark) {
+  .avatar-frame::after { background: var(--page-dark-bg); }
+}
+
+.avatar-img-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--rose-100) 0%, var(--rose-200) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.avatar-frame:hover .avatar-img-wrap { transform: scale(1.06); }
+.avatar-img-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.avatar-placeholder-icon { color: rgba(255, 255, 255, 0.9); }
+
+.avatar-name-label {
+  font-size: 15px;
+  color: var(--muted-deep);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  font-family: var(--serif);
+}
+@media (prefers-color-scheme: dark) {
+  .avatar-name-label { color: var(--muted-darker); }
+}
+
+/* ---------- Heart bridge ---------- */
+.heart-bridge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 20px;
+  flex-shrink: 0;
+  position: relative;
+  top: -14px;
+}
+.bridge-line {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, rgba(253,164,175,0.2), rgba(253,164,175,0.7), rgba(253,164,175,0.2));
+}
+.bridge-heart {
+  color: var(--rose-300);
+  filter: drop-shadow(0 0 8px rgba(251, 113, 133, 0.6));
+  animation: heartbeat 1.8s ease-in-out infinite;
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15%       { transform: scale(1.22); }
+  30%       { transform: scale(1.05); }
+  45%       { transform: scale(1.18); }
+  60%       { transform: scale(1); }
+}
+
+/* ---------- Days counter ---------- */
+.days-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 20px;
+}
+.days-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.5em;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+.days-num-row { display: flex; align-items: baseline; gap: 10px; line-height: 1; }
+.days-num {
+  font-size: clamp(88px, 13vw, 148px);
+  font-weight: 100;
+  letter-spacing: -6px;
+  color: var(--text-h);
+  font-family: 'Geist Variable', system-ui, sans-serif;
+  line-height: 0.9;
+}
+.days-unit {
+  font-size: clamp(18px, 2.5vw, 26px);
+  color: var(--muted);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  font-family: var(--serif);
+  padding-bottom: 12px;
+}
+
+/* ---------- hh:mm:ss ---------- */
+.hms-row { display: flex; align-items: flex-start; gap: 4px; margin-bottom: 52px; }
+.hms-unit { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 68px; }
+.hms-value {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 200;
+  color: var(--text-h);
+  font-family: 'Geist Variable', system-ui, sans-serif;
+  letter-spacing: -1px;
+  line-height: 1;
+  opacity: 0.75;
+}
+.hms-sep {
+  font-size: clamp(24px, 3.5vw, 36px);
+  font-weight: 100;
+  color: rgba(253, 164, 175, 0.5);
+  line-height: 1;
+  padding-top: 2px;
+}
+.hms-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}

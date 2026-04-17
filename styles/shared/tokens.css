@@ -1,0 +1,57 @@
+/* =====================================================
+   Frontend Design Tokens — shared across all public pages
+   (Home · Login · Timeline · Tag · ImageLightbox)
+
+   Dark mode is handled HERE ONCE.
+   Page files use variables; no more per-file @media dark.
+   ===================================================== */
+
+:root {
+  /* ── Rose scale ── */
+  --rose-100: #fecdd3;   /* lightest: line accents, borders */
+  --rose-200: #fda4af;   /* light:    orb fills, icon default */
+  --rose-300: #fb7185;   /* mid:      active hearts, CTA icon */
+  --rose-400: #f43f5e;   /* deep:     button gradient mid */
+  --rose-500: #e11d48;   /* deepest:  button gradient end, active text */
+
+  /* ── Muted rose (labels, subtitles) ── */
+  --muted:         #e2a0b0;
+  --muted-deep:    #c084a8;
+  --muted-darker:  #9a6075;
+
+  /* ── Page backgrounds ── */
+  --page-bg:       #fdf4f7;
+  --page-bg-2:     #fff8fb;
+  --page-dark-bg:  #130d10;
+  --page-dark-bg-2:#16171d;
+
+  /* ── Typography ── */
+  --serif: 'Noto Serif SC', Georgia, serif;
+  --sans:  system-ui, sans-serif;
+
+  /* ── Glassmorphism surfaces ── */
+  --glass-white:  rgba(255, 255, 255, 0.50);
+  --glass-soft:   rgba(255, 248, 251, 0.60);
+  --glass-card:   rgba(255, 255, 255, 0.62);
+
+  /* ── Transitions ── */
+  --t-fast: 0.2s;
+  --t-base: 0.25s ease;
+
+  /* ── Commonly reused blur ── */
+  --blur-sm: blur(10px);
+  --blur-md: blur(12px);
+  --blur-lg: blur(20px);
+}
+
+/* ── Dark mode token overrides ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --muted:         #9a6075;
+    --muted-deep:    #9a6075;
+
+    --glass-white:  rgba(30, 15, 20, 0.50);
+    --glass-soft:   rgba(20, 10, 16, 0.55);
+    --glass-card:   rgba(25, 12, 18, 0.65);
+  }
+}

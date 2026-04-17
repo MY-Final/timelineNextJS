@@ -1,0 +1,46 @@
+/* =====================================================
+   Easter Eggs — Floating Hearts · Modes · Konami Mode
+   ===================================================== */
+
+/* ---------- Fullscreen floating hearts (heart-bridge click) ---------- */
+.heart-bridge { cursor: pointer; }
+.floating-heart-fullscreen {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  animation: heart-rise 2.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+@keyframes heart-rise {
+  0%   { opacity: 0.9; transform: translateY(0) rotate(0deg) scale(1); }
+  15%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-90vh) rotate(270deg) scale(0.4); }
+}
+
+/* ---------- Secret mode (heart clicked ×10) ---------- */
+.secret-mode .bridge-heart  { animation: heartbeat 0.6s ease-in-out infinite; color: #f472b6; }
+.secret-mode .home-orb      { animation-duration: 4s; }
+.secret-mode .home-title    { animation: rainbow 2s linear infinite; }
+
+/* ---------- Anniversary effect (monthly same date) ---------- */
+.anniversary .days-num   { animation: pulse-glow 2s ease-in-out infinite; }
+.anniversary .bridge-heart { animation: heartbeat 0.8s ease-in-out infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { text-shadow: 0 0 0 transparent; }
+  50%       { text-shadow: 0 0 24px rgba(251, 113, 133, 0.6); }
+}
+@keyframes rainbow {
+  0%   { color: #fb7185; }
+  33%  { color: #f472b6; }
+  66%  { color: #a78bfa; }
+  100% { color: #fb7185; }
+}
+
+/* ---------- Konami code mode ---------- */
+.konami-mode .home-shell    { filter: hue-rotate(180deg); }
+.konami-mode .avatar-img-wrap { animation: avatar-spin 2s linear infinite; }
+@keyframes avatar-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

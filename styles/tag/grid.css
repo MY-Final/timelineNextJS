@@ -1,0 +1,162 @@
+/* =====================================================
+   Tag — Chips · Grid · Event Cards · Carousel · Footer
+   ===================================================== */
+
+/* ---------- Tag selection ---------- */
+.tag-selection {
+  padding: 20px 24px 40px;
+  position: relative; z-index: 10;
+}
+.tag-chips {
+  display: flex; justify-content: center;
+  flex-wrap: wrap; gap: 28px;
+}
+.tag-chips::-webkit-scrollbar { display: none; }
+
+.tag-chip {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(251, 113, 133, 0.25);
+  background: rgba(255, 255, 255, 0.5);
+  color: #c084a8;
+  font-size: 13px; letter-spacing: .08em; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+}
+.tag-chip::after { display: none; }
+.tag-chip:hover {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--rose-300); border-color: rgba(251, 113, 133, 0.5);
+}
+.tag-chip.selected {
+  background: rgba(251, 113, 133, 0.12);
+  color: #e11d48; border-color: rgba(225, 29, 72, 0.45);
+  box-shadow: 0 2px 10px rgba(251, 113, 133, 0.2);
+}
+.tag-chip.selected::after { display: none; }
+.tag-chip:focus { outline: none; }
+@media (hover: none) {
+  .tag-chip:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #c084a8; border-color: rgba(251, 113, 133, 0.25);
+  }
+}
+
+/* ---------- Main grid ---------- */
+.tag-main { padding: 0 24px 100px; position: relative; z-index: 10; }
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 32px; max-width: 1200px; margin: 0 auto;
+}
+@media (max-width: 768px) {
+  .tag-grid { grid-template-columns: 1fr; gap: 24px; }
+}
+
+/* ---------- Event card ---------- */
+.tag-event-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(253, 164, 175, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.tag-event-card:hover {
+  box-shadow: 0 20px 40px rgba(253, 164, 175, 0.3);
+  border-color: rgba(251, 113, 133, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  .tag-event-card { background: rgba(30, 15, 20, 0.6); border-color: rgba(160, 80, 100, 0.2); }
+  .tag-event-card:hover { box-shadow: 0 20px 40px rgba(180, 60, 90, 0.2); border-color: rgba(251, 113, 133, 0.3); }
+}
+
+.tag-event-photo { position: relative; aspect-ratio: 16/9; overflow: hidden; }
+
+/* ---------- Carousel ---------- */
+.tag-carousel { position: relative; width: 100%; height: 100%; cursor: pointer; will-change: contents; }
+.tag-carousel-image {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0; transition: opacity 0.4s ease;
+  will-change: opacity;
+  pointer-events: none; user-select: none;
+}
+.tag-carousel-image.active   { opacity: 1; }
+.tag-carousel-image.img-error { opacity: 1 !important; background: #fce7e7; object-fit: none; }
+
+.tag-carousel-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.8); border: none; border-radius: 50%;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  color: #c084a8; font-size: 18px; font-weight: bold; cursor: pointer;
+  transition: all 0.2s ease; z-index: 2;
+}
+.tag-carousel-nav:hover { background: #fff; color: var(--rose-300); }
+.tag-carousel-prev { left: 8px; }
+.tag-carousel-next { right: 8px; }
+
+.tag-carousel-indicators {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px; z-index: 2;
+}
+.tag-carousel-dot {
+  width: 8px; height: 8px; border-radius: 50%; border: none;
+  background: rgba(255, 255, 255, 0.5); cursor: pointer; transition: background 0.2s ease;
+}
+.tag-carousel-dot.active { background: var(--rose-300); }
+.tag-carousel-dot:hover  { background: rgba(255, 255, 255, 0.8); }
+
+/* ---------- Event content ---------- */
+.tag-event-content { padding: 20px; }
+.tag-event-date   { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+.tag-event-title  { font-size: 18px; color: var(--text-h); margin: 0 0 12px; line-height: 1.3; }
+.tag-event-description {
+  font-size: 14px; color: var(--text); line-height: 1.5; margin: 0 0 16px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tag-event-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-event-tag {
+  background: rgba(251, 113, 133, 0.1); color: var(--rose-300);
+  padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
+}
+@media (prefers-color-scheme: dark) {
+  .tag-event-date { color: #9a6075; }
+  .tag-event-tag  { background: rgba(251, 113, 133, 0.2); color: var(--rose-300); }
+}
+
+/* ---------- Footer counter ---------- */
+.tag-footer {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px);
+  border-radius: 20px; padding: 10px 20px;
+  border: 1px solid rgba(253, 164, 175, 0.3); z-index: 20;
+}
+.tag-counter { font-size: 12px; color: #c084a8; font-weight: 500; }
+@media (prefers-color-scheme: dark) {
+  .tag-footer { background: rgba(30, 15, 20, 0.7); border-color: rgba(160, 80, 100, 0.3); }
+  .tag-counter { color: #9a6075; }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .dot { animation: none; }
+  .tag-chip, .tag-event-card { transition: none; }
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 768px) {
+  .tag-header    { padding: 30px 16px 16px; }
+  .tag-selection { padding: 0 16px 30px; }
+  .tag-main      { padding: 0 16px 120px; }
+  .tag-grid      { gap: 20px; }
+  .tag-event-content { padding: 16px; }
+  .tag-event-title   { font-size: 16px; }
+}

@@ -1,0 +1,127 @@
+/* =====================================================
+   Timeline — Dark Mode · Responsive · Easter Eggs
+   ===================================================== */
+
+/* ── Dark mode ──────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .app-shell {
+    background: linear-gradient(180deg, #1a0a10 0%, #0f0f0f 40%, #1a0a10 100%);
+  }
+  .hero-subtitle { color: #9f1239; }
+  .hero-line {
+    background: linear-gradient(to bottom, #9f1239 0%, #9f1239 60%, transparent 100%);
+  }
+  .connector-heart { background: #1f1f1f; border-color: #9f1239; }
+  .connector-heart.active { background: #2a1015; border-color: #e11d48; }
+  .event-title.active { color: #f3f4f6; }
+  .event-description p { color: #9ca3af; }
+  .event-tag {
+    background: rgba(159, 18, 57, 0.2);
+    border-color: #9f1239;
+    color: #fb7185;
+  }
+  .timeline-line {
+    background: linear-gradient(to bottom, transparent 0%, #9f1239 5%, #9f1239 90%, transparent 100%);
+    filter: drop-shadow(0 0 6px rgba(159, 18, 57, 0.5));
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .fan-gallery, .fan-card, .timeline-card, .connector-heart,
+  .event-description, .side-nav-dot, .hero-sparkle, .scroll-ring {
+    transition: none !important;
+    animation: none !important;
+  }
+  .dot { animation: none !important; }
+  .floating-heart, .mouse-trail { animation: none !important; display: none; }
+}
+
+/* ── Responsive — small tablet (481–767px) ──────── */
+@media (max-width: 767px) {
+  .timeline-main  { padding: 48px 16px 160px; }
+  .timeline-events { gap: 72px; }
+  .timeline-card  { grid-template-columns: 1fr; }
+  .fan-gallery    { width: 280px; height: 296px; }
+  .fan-card       { width: 176px; height: 234px; }
+  .event-title    { font-size: 24px; }
+  .side-nav       { padding: 8px 14px; gap: 8px; }
+  .hero           { padding: 48px 16px 0; }
+  .hero-line      { height: 56px; }
+}
+
+/* ── Responsive — mobile (≤480px) ──────────────── */
+@media (max-width: 480px) {
+  .timeline-main       { padding: 40px 12px 140px; }
+  .timeline-events     { gap: 56px; }
+  .fan-gallery         { width: 240px; height: 260px; }
+  .fan-card            { width: 154px; height: 205px; }
+  .event-title         { font-size: 22px; margin-bottom: 14px; }
+  .event-description p { font-size: 13px; line-height: 1.8; }
+  .timeline-card-content { padding: 0 12px 24px; }
+  .side-nav            { padding: 7px 12px; gap: 6px; max-width: calc(100vw - 32px); }
+  .side-nav-dot        { width: 6px; height: 6px; }
+  .hero                { padding: 40px 12px 0; }
+  .hero-line           { height: 44px; }
+  .scroll-ring         { width: 22px; height: 22px; }
+  .scroll-to-top-btn   { bottom: 72px; right: 16px; width: 40px; height: 40px; }
+}
+
+/* ── Responsive — tiny (≤360px) ─────────────────── */
+@media (max-width: 360px) {
+  .fan-gallery   { width: 210px; height: 230px; }
+  .fan-card      { width: 136px; height: 181px; }
+  .event-title   { font-size: 20px; }
+  .timeline-card-content { padding: 0 8px 20px; }
+  .side-nav      { gap: 4px; padding: 6px 10px; }
+}
+
+/* ── Easter eggs ────────────────────────────────── */
+
+/* Floating hearts that drift up from connector */
+.floating-heart {
+  position: absolute;
+  pointer-events: none;
+  font-size: 12px;
+  animation: float-up 1.5s ease-out forwards;
+  z-index: 100;
+}
+@keyframes float-up {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+}
+
+/* Mouse trail dots */
+.mouse-trail {
+  position: fixed;
+  width: 6px; height: 6px;
+  background: var(--rose-300);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%) translateZ(0);
+  animation: trail-fade 0.8s ease-out forwards;
+  will-change: transform, opacity;
+}
+@keyframes trail-fade {
+  0%   { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(0); }
+}
+
+/* Secret love mode (Konami code) */
+.secret-mode .hero-subtitle { animation: rainbow 2s linear infinite; }
+.secret-mode .hero-sparkle  { animation: sparkle-pulse 0.5s ease-in-out infinite; }
+.secret-mode .timeline-line {
+  background: linear-gradient(to bottom, transparent 0%, var(--rose-300) 5%, var(--rose-300) 90%, transparent 100%);
+  opacity: 0.8;
+}
+@keyframes rainbow {
+  0%   { color: #fb7185; }
+  33%  { color: #f472b6; }
+  66%  { color: #a78bfa; }
+  100% { color: #fb7185; }
+}
+
+/* Special day effect */
+.special-day .hero-sparkle { color: var(--rose-300); transform: scale(1.3); }
+.special-day .scroll-ring  { border-color: var(--rose-300); animation-duration: 1s; }
