@@ -4,6 +4,30 @@ import pool from '@/lib/db';
 import { getOtp, delOtp } from '@/lib/redis';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: 注册新用户（需先获取验证码）
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password, email, code]
+ *             properties:
+ *               username: { type: string }
+ *               password: { type: string }
+ *               nickname: { type: string }
+ *               email: { type: string }
+ *               code: { type: string, description: "邮箱验证码" }
+ *     responses:
+ *       200:
+ *         description: 注册成功
+ */
+
 /** POST /api/auth/register */
 export async function POST(request: NextRequest) {
   let body: {

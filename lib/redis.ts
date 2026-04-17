@@ -7,9 +7,8 @@ let client: Redis | null = null;
 export function getRedis(): Redis {
   if (!client) {
     client = new Redis(REDIS_URL, {
-      lazyConnect: true,
-      enableOfflineQueue: false,
-      maxRetriesPerRequest: 1,
+      maxRetriesPerRequest: 3,
+      retryStrategy: (times) => Math.min(times * 200, 2000),
     });
     client.on('error', (err) => {
       console.error('[Redis] connection error:', err.message);

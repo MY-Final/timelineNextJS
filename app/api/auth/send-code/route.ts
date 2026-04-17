@@ -5,6 +5,30 @@ import { sendOtpMail } from '@/lib/mailer';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 import { getRedis } from '@/lib/redis';
 
+/**
+ * @swagger
+ * /api/auth/send-code:
+ *   post:
+ *     summary: 发送邮箱验证码
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, purpose]
+ *             properties:
+ *               email: { type: string }
+ *               purpose:
+ *                 type: string
+ *                 enum: [register, reset]
+ *                 description: register=注册验证, reset=找回密码
+ *     responses:
+ *       200:
+ *         description: 验证码已发送
+ */
+
 /** POST /api/auth/send-code
  * body: { email, purpose: 'register' | 'reset' }
  */
@@ -59,12 +83,14 @@ export async function POST(request: NextRequest) {
 
   try {
     await setOtp(otpKey, code);
-  } catch {
+  } catch (err) {
+    console.error('[send-code] Redis setOtp failed:', err);
     return errorResponse(ResultCode.INTERNAL_ERROR, 'Redis 不可用，无法发送验证码');
   }
 
   const result = await sendOtpMail(email, code, purpose as 'register' | 'reset');
   if (!result.success) {
+    console.error('[send-code] sendOtpMail failed:', result.message);
     return errorResponse(ResultCode.UPSTREAM_ERROR, result.message);
   }
 

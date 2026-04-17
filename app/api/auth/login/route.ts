@@ -5,6 +5,27 @@ import { signToken } from '@/lib/jwt';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 import { TOKEN_COOKIE } from '@/lib/auth';
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: 登录
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username: { type: string, example: admin }
+ *               password: { type: string, example: "123456" }
+ *     responses:
+ *       200:
+ *         description: 登录成功，返回用户信息，Set-Cookie 设置 token
+ */
+
 /** Cookie 有效期与 JWT 保持一致（秒） */
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7d
 
