@@ -50,25 +50,28 @@
   z-index: 50;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(200, 160, 180, 0.3);
-  background: var(--glass-soft);
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(200, 130, 160, 0.4);
+  background: rgba(255, 240, 248, 0.7);
   backdrop-filter: var(--blur-sm);
   -webkit-backdrop-filter: var(--blur-sm);
-  color: #b090a8;
-  font-size: 11px;
+  color: #b06088;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0.06em;
   text-decoration: none;
-  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast), opacity var(--t-fast);
-  opacity: 0.5;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast), opacity var(--t-fast), box-shadow var(--t-fast);
+  opacity: 0.75;
+  box-shadow: 0 2px 12px rgba(200, 80, 120, 0.1);
 }
 .home-admin-entry:hover {
   opacity: 1;
   color: #c05080;
-  border-color: rgba(200, 100, 140, 0.5);
-  background: rgba(255, 240, 246, 0.85);
+  border-color: rgba(200, 100, 140, 0.55);
+  background: rgba(255, 240, 246, 0.92);
+  box-shadow: 0 4px 16px rgba(200, 80, 120, 0.18);
 }
 @media (prefers-color-scheme: dark) {
   .home-admin-entry {

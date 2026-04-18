@@ -52,7 +52,7 @@
 /* ---------- Fan gallery (poker-hand spread) ---------- */
 .fan-gallery {
   position: relative;
-  width: 320px; height: 340px;
+  width: 260px; height: 280px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -64,8 +64,8 @@
 .fan-card {
   position: absolute;
   bottom: 0;
-  width: 200px; height: 266px;
-  border-radius: 14px;
+  width: 160px; height: 213px;
+  border-radius: 12px;
   overflow: hidden;
   transform-origin: bottom center;
   transition:
@@ -75,7 +75,7 @@
   box-shadow: 0 4px 14px rgba(0,0,0,.12), 0 10px 30px rgba(0,0,0,.08);
   will-change: transform;
   cursor: default;
-  outline: 3px solid rgba(255,255,255,.9);
+  outline: 2.5px solid rgba(255,255,255,.9);
 }
 .fan-gallery.fan-active .fan-card { cursor: pointer; }
 .fan-card:not(.fan-hovered) { filter: brightness(0.9) saturate(0.9); }
@@ -280,50 +280,236 @@
 }
 
 /* ── 评论面板遮罩 ── */
-.comment-backdrop {
+/* ════════════════════════════════════════════════
+   评论全屏覆盖层（左：评论区 / 右：帖子预览）
+   ════════════════════════════════════════════════ */
+
+.comment-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(180, 60, 90, 0.18);
-  backdrop-filter: blur(6px);
   z-index: 9900;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  animation: comment-fade-in 0.18s ease;
+  flex-direction: row;
+  background: rgba(80, 10, 25, 0.55);
+  backdrop-filter: blur(16px) saturate(1.6);
+  animation: co-fade-in 0.25s ease forwards;
+  overflow: hidden;
 }
 
-@keyframes comment-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.comment-overlay--closing {
+  animation: co-fade-out 0.28s ease forwards;
 }
 
-/* ── 评论面板主体 ── */
-.comment-panel {
-  width: 100%;
+@keyframes co-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes co-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* ── 右侧：帖子预览 ── */
+.comment-overlay-post {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  animation: co-post-in 0.38s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: 0.05s;
+}
+
+.comment-overlay--closing .comment-overlay-post {
+  animation: co-post-out 0.26s cubic-bezier(.55,0,1,.45) both;
+}
+@keyframes co-post-out {
+  to { opacity: 0; transform: translateX(40px) scale(0.96); }
+}
+
+@keyframes co-post-in {
+  from { opacity: 0; transform: translateX(48px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0)    scale(1);    }
+}
+
+/* 文案区 */
+.comment-overlay-post-info {
+  padding: 40px 44px 24px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.comment-overlay-date {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 10px;
+}
+
+.comment-overlay-title {
+  font-size: clamp(24px, 3.5vw, 42px);
+  font-weight: 700;
+  margin: 0 0 14px;
+  line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.comment-overlay-desc {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.78);
+  margin: 0 0 18px;
+  display: -webkit-box;
+  line-clamp: 4;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   max-width: 520px;
-  max-height: 85dvh;
+}
+
+.comment-overlay-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.comment-overlay-tags .event-tag {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: rgba(255,255,255,0.88);
+  backdrop-filter: blur(4px);
+}
+
+/* 分割线 */
+.comment-overlay-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.18);
+  margin: 0 44px 0;
+  flex-shrink: 0;
+}
+
+/* 轮播图 */
+.comment-overlay-carousel {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  max-height: 420px;
+  margin: 20px 44px 32px;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+  aspect-ratio: 16 / 10;
+}
+
+.comment-overlay-carousel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: rgba(0,0,0,0.25);
+  display: block;
+  animation: carousel-fade 0.3s ease;
+}
+
+@keyframes carousel-fade {
+  from { opacity: 0.5; transform: scale(1.02); }
+  to   { opacity: 1;   transform: scale(1); }
+}
+
+.comment-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.35);
+  border: none;
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+.comment-carousel-btn:hover { background: rgba(0,0,0,0.55); }
+.comment-carousel-btn--prev { left: 16px; }
+.comment-carousel-btn--next { right: 16px; }
+
+.comment-carousel-dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.comment-carousel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.2s;
+}
+.comment-carousel-dot.active {
+  background: #fff;
+  transform: scale(1.3);
+}
+
+/* 移除旧的图片堆叠样式 */
+.comment-overlay-images { display: none; }
+.comment-overlay-img { display: none; }
+
+/* ── 左侧：评论面板 ── */
+.comment-panel {
+  width: min(420px, 100%);
+  max-width: 440px;
+  height: 100%;
   background: var(--page-bg-2, #fff8fb);
-  border: 1px solid var(--rose-100);
-  border-radius: 20px 20px 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: comment-slide-up 0.22s cubic-bezier(.22,.61,.36,1);
-  box-shadow: 0 -8px 40px rgba(225, 29, 72, 0.08);
+  box-shadow: 4px 0 32px rgba(180, 40, 75, 0.12);
+  animation: co-panel-in 0.35s cubic-bezier(.22,1,.36,1) both;
 }
 
-@keyframes comment-slide-up {
-  from { transform: translateY(60px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+@keyframes co-panel-in {
+  from { opacity: 0; transform: translateX(-60px); }
+  to   { opacity: 1; transform: translateX(0);     }
+}
+
+.comment-overlay--closing .comment-panel {
+  animation: co-panel-out 0.26s cubic-bezier(.55,0,1,.45) both;
+}
+@keyframes co-panel-out {
+  to { opacity: 0; transform: translateX(-50px); }
 }
 
 /* ── 面板头部 ── */
 .comment-panel-header {
-  position: relative;
-  padding: 16px 20px 12px;
+  padding: 14px 20px 12px;
   border-bottom: 1px solid var(--rose-100);
   flex-shrink: 0;
 }
+
+.comment-panel-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-darker, #9a6075);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 0;
+  margin-bottom: 8px;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+.comment-panel-back:hover { color: var(--rose-500); }
 
 .comment-panel-title {
   display: flex;
@@ -649,8 +835,62 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 480px) {
+/* ── 移动端：上下堆叠布局 ── */
+@media (max-width: 767px) {
+  .comment-overlay {
+    flex-direction: column;
+    background: rgba(180, 40, 75, 0.22);
+  }
+
+  .comment-overlay-post {
+    flex: 0 0 auto;
+    overflow: hidden;
+    animation: co-post-in-m 0.35s cubic-bezier(.22,1,.36,1) both;
+    animation-delay: 0.05s;
+  }
+
+  @keyframes co-post-in-m {
+    from { opacity: 0; transform: translateY(-24px); }
+    to   { opacity: 1; transform: translateY(0);      }
+  }
+
+  .comment-overlay-post-info {
+    padding: 20px 20px 16px;
+  }
+
+  .comment-overlay-title {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .comment-overlay-desc {
+    font-size: 13px;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    margin-bottom: 10px;
+  }
+
+  .comment-overlay-divider { margin: 0 20px; }
+
+  .comment-overlay-carousel {
+    height: 180px;
+    flex: none;
+  }
+
+  .comment-overlay-date { margin-bottom: 6px; }
+
   .comment-panel {
-    max-height: 92dvh;
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 32px rgba(180, 40, 75, 0.12);
+    animation: co-panel-in-m 0.35s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes co-panel-in-m {
+    from { opacity: 0; transform: translateY(60px); }
+    to   { opacity: 1; transform: translateY(0);    }
   }
 }
+

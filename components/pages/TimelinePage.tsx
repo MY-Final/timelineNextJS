@@ -531,6 +531,14 @@ export default function TimelinePage() {
         <CommentPanel
           postId={commentTarget.id}
           postTitle={commentTarget.title}
+          postData={{
+            id: commentTarget.id,
+            title: commentTarget.title,
+            date: commentTarget.date,
+            description: commentTarget.description,
+            images: commentTarget.images,
+            tags: commentTarget.tags,
+          }}
           onClose={() => setCommentTarget(null)}
           onCountChange={(delta) => {
             commentDeltaCbRef.current?.(delta);

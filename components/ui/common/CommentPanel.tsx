@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, Send, Heart, Trash2, Loader2, MessageSquare } from "lucide-react";
+import { X, Send, Heart, Trash2, Loader2, MessageSquare, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
@@ -29,9 +29,19 @@ export interface CommentItem {
   replies?: CommentItem[];
 }
 
+interface PostData {
+  id: number;
+  title: string;
+  date: string;
+  description: string;
+  images: string[];
+  tags: string[];
+}
+
 interface Props {
   postId: number;
   postTitle: string;
+  postData?: PostData;
   onClose: () => void;
   onCountChange?: (delta: number) => void;
 }
@@ -181,7 +191,7 @@ function CommentRow({
 }
 
 // ── 主面板 ────────────────────────────────────────────
-export default function CommentPanel({ postId, postTitle, onClose, onCountChange }: Props) {
+export default function CommentPanel({ postId, postTitle, postData, onClose, onCountChange }: Props) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -348,23 +358,103 @@ export default function CommentPanel({ postId, postTitle, onClose, onCountChange
     }
   }
 
-  // 关闭面板时点击背景
-  function handleBackdropClick(e: React.MouseEvent) {
-    if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
+  // 关闭时先播退出动画
+  const [closing, setClosing] = useState(false);
+  function requestClose() {
+    setClosing(true);
+    setTimeout(() => onClose(), 300);
   }
 
+  // 锁定背景滚动
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // ESC 关闭
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") requestClose(); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 图片轮播
+  const [imgIndex, setImgIndex] = useState(0);
+  const images = postData?.images ?? [];
+  function prevImg() { setImgIndex(i => (i - 1 + images.length) % images.length); }
+  function nextImg() { setImgIndex(i => (i + 1) % images.length); }
+
   return createPortal(
-    <div className="comment-backdrop" onClick={handleBackdropClick}>
+    <div className={`comment-overlay${closing ? " comment-overlay--closing" : ""}`} onClick={e => { if (e.target === e.currentTarget) requestClose(); }}>
+
+      {/* ── 右侧：帖子预览 ── */}
+      {postData && (
+        <div className="comment-overlay-post">
+          {/* 文案区 */}
+          <div className="comment-overlay-post-info">
+            <div className="comment-overlay-date">{postData.date}</div>
+            <h2 className="comment-overlay-title font-serif-cn">{postData.title}</h2>
+            <p className="comment-overlay-desc">{postData.description}</p>
+            {postData.tags.length > 0 && (
+              <div className="comment-overlay-tags">
+                {postData.tags.map(t => <span key={t} className="event-tag">{t}</span>)}
+              </div>
+            )}
+          </div>
+
+          {/* 分割线 */}
+          {images.length > 0 && <div className="comment-overlay-divider" />}
+
+          {/* 图片轮播 */}
+          {images.length > 0 && (
+            <div className="comment-overlay-carousel">
+              <img
+                key={images[imgIndex]}
+                src={images[imgIndex]}
+                alt=""
+                className="comment-overlay-carousel-img"
+              />
+              {images.length > 1 && (
+                <>
+                  <button className="comment-carousel-btn comment-carousel-btn--prev" onClick={prevImg} aria-label="上一张">
+                    <ChevronLeft size={20} strokeWidth={2} />
+                  </button>
+                  <button className="comment-carousel-btn comment-carousel-btn--next" onClick={nextImg} aria-label="下一张">
+                    <ChevronRight size={20} strokeWidth={2} />
+                  </button>
+                  <div className="comment-carousel-dots">
+                    {images.map((_, i) => (
+                      <button
+                        key={i}
+                        className={`comment-carousel-dot${i === imgIndex ? " active" : ""}`}
+                        onClick={() => setImgIndex(i)}
+                        aria-label={`第${i+1}张`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 左侧：评论面板 ── */}
       <div className="comment-panel" ref={panelRef}>
         {/* 头部 */}
         <div className="comment-panel-header">
+          <button className="comment-panel-back" onClick={requestClose} aria-label="返回">
+            <ArrowLeft size={16} strokeWidth={2} />
+            <span>返回</span>
+          </button>
           <div className="comment-panel-title">
             <MessageSquare size={15} strokeWidth={1.8} />
             <span>评论</span>
             {total > 0 && <span className="comment-panel-count">{total}</span>}
           </div>
           <div className="comment-panel-subtitle">{postTitle}</div>
-          <button className="comment-panel-close" onClick={onClose}><X size={16} /></button>
         </div>
 
         {/* 评论列表 */}

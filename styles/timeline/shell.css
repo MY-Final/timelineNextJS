@@ -69,11 +69,11 @@
 .timeline-main {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 60px 24px 200px;
+  padding: 60px 24px calc(100vh - 200px);
   position: relative;
 }
 @media (min-width: 768px) {
-  .timeline-main { padding: 60px 48px 200px; }
+  .timeline-main { padding: 60px 48px calc(100vh - 200px); }
 }
 
 /* ---------- Vertical center line ---------- */
