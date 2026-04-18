@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "@/components/pages/AdminLayout";
+import ConfirmDialog, { ConfirmDialogProps } from "@/components/ui/common/ConfirmDialog";
 import { MessageSquare, Search, Trash2, EyeOff, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 interface CommentRow {
@@ -29,6 +30,7 @@ export default function AdminCommentsPage() {
   const [keyword, setKeyword] = useState("");
   const [inputKeyword, setInputKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [dialog, setDialog] = useState<ConfirmDialogProps | null>(null);
 
   const fetchComments = useCallback(async (pg: number, kw: string, st: string) => {
     setLoading(true);
@@ -76,16 +78,25 @@ export default function AdminCommentsPage() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("确定永久删除这条评论吗？此操作不可撤销。")) return;
-    const res = await fetch(`/api/admin/comments/${id}`, { method: "DELETE" });
-    const json = await res.json();
-    if (json.code === 0) {
-      setComments(prev => prev.filter(c => c.id !== id));
-      setTotalCount(t => Math.max(0, t - 1));
-    } else {
-      alert(json.message ?? "删除失败");
-    }
+  function handleDelete(id: number) {
+    setDialog({
+      title: "确认删除评论",
+      message: "此操作不可撤销，评论将被永久删除。",
+      confirmText: "删除",
+      danger: true,
+      onConfirm: async () => {
+        setDialog(null);
+        const res = await fetch(`/api/admin/comments/${id}`, { method: "DELETE" });
+        const json = await res.json();
+        if (json.code === 0) {
+          setComments(prev => prev.filter(c => c.id !== id));
+          setTotalCount(t => Math.max(0, t - 1));
+        } else {
+          alert(json.message ?? "删除失败");
+        }
+      },
+      onCancel: () => setDialog(null),
+    });
   }
 
   function formatDate(str: string) {
@@ -223,6 +234,7 @@ export default function AdminCommentsPage() {
           </div>
         )}
       </div>
+      {dialog && <ConfirmDialog {...dialog} />}
     </AdminLayout>
   );
 }
