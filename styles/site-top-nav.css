@@ -1,0 +1,239 @@
+/* =====================================================
+   SiteTopNav — 全局顶部导航条（公开页面）
+   固定在左上角，登录前显示登录/注册，
+   登录后显示管理员入口（仅 admin/superadmin）和头像菜单
+   ===================================================== */
+
+.site-top-nav {
+  position: fixed;
+  top: 16px;
+  left: 20px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── 通用按钮 ── */
+.site-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(200, 130, 160, 0.4);
+  background: rgba(255, 240, 248, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #b06088;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 10px rgba(200, 80, 120, 0.08);
+  white-space: nowrap;
+}
+.site-nav-btn:hover {
+  color: #c05080;
+  border-color: rgba(200, 100, 140, 0.6);
+  background: rgba(255, 240, 246, 0.95);
+  box-shadow: 0 4px 16px rgba(200, 80, 120, 0.18);
+  transform: translateY(-1px);
+}
+
+/* 控制台按钮 */
+.site-nav-btn--admin {
+  background: rgba(192, 68, 106, 0.09);
+  border-color: rgba(192, 68, 106, 0.35);
+}
+.site-nav-btn--admin:hover {
+  background: rgba(192, 68, 106, 0.16);
+  border-color: rgba(192, 68, 106, 0.55);
+}
+
+/* 主要按钮（注册） */
+.site-nav-btn--primary {
+  background: linear-gradient(135deg, rgba(253, 164, 175, 0.9), rgba(244, 63, 94, 0.8));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(244, 63, 94, 0.25);
+}
+.site-nav-btn--primary:hover {
+  background: linear-gradient(135deg, #fb7185, #e11d48);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(244, 63, 94, 0.38);
+  border-color: transparent;
+}
+
+/* ── 头像按钮 ── */
+.site-nav-avatar-wrap {
+  position: relative;
+}
+
+.site-nav-avatar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 22px;
+  border: 1px solid rgba(200, 130, 160, 0.4);
+  background: rgba(255, 240, 248, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 10px rgba(200, 80, 120, 0.08);
+}
+.site-nav-avatar-btn:hover {
+  background: rgba(255, 240, 246, 0.95);
+  border-color: rgba(200, 100, 140, 0.6);
+  box-shadow: 0 4px 16px rgba(200, 80, 120, 0.18);
+}
+
+.site-nav-avatar-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fda4af, #f43f5e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.site-nav-avatar-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #b06088;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 下拉菜单 ── */
+.site-nav-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 160px;
+  background: rgba(255, 248, 252, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(200, 130, 160, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(180, 60, 100, 0.14);
+  padding: 8px 6px;
+  animation: site-nav-drop-in 0.15s ease;
+}
+
+@keyframes site-nav-drop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.site-nav-dropdown-user {
+  padding: 6px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.site-nav-dropdown-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8a3055;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-nav-dropdown-role {
+  font-size: 11px;
+  color: #c090a8;
+}
+
+.site-nav-dropdown-divider {
+  height: 1px;
+  background: rgba(200, 130, 160, 0.2);
+  margin: 2px 4px 6px;
+}
+
+.site-nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: #9a5070;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+  box-sizing: border-box;
+}
+.site-nav-dropdown-item:hover {
+  background: rgba(212, 92, 128, 0.1);
+  color: #c0446a;
+}
+.site-nav-dropdown-item--danger {
+  color: #b04060;
+}
+.site-nav-dropdown-item--danger:hover {
+  background: rgba(200, 60, 60, 0.1);
+  color: #c03030;
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+  .site-nav-btn,
+  .site-nav-avatar-btn {
+    background: rgba(20, 10, 16, 0.60);
+    border-color: rgba(120, 60, 80, 0.35);
+    color: #9a7080;
+  }
+  .site-nav-btn:hover,
+  .site-nav-avatar-btn:hover {
+    background: rgba(30, 14, 22, 0.80);
+    border-color: rgba(180, 80, 110, 0.5);
+    color: #d090b0;
+  }
+  .site-nav-btn--admin {
+    background: rgba(120, 30, 60, 0.20);
+    border-color: rgba(160, 60, 90, 0.35);
+  }
+  .site-nav-btn--primary {
+    background: linear-gradient(135deg, rgba(180, 60, 90, 0.8), rgba(200, 30, 60, 0.75));
+    color: #ffe0ea;
+  }
+  .site-nav-avatar-name { color: #9a7080; }
+  .site-nav-dropdown {
+    background: rgba(20, 10, 16, 0.95);
+    border-color: rgba(120, 60, 80, 0.35);
+  }
+  .site-nav-dropdown-name { color: #e090b0; }
+  .site-nav-dropdown-role { color: #806070; }
+  .site-nav-dropdown-divider { background: rgba(120, 60, 80, 0.25); }
+  .site-nav-dropdown-item { color: #c08098; }
+  .site-nav-dropdown-item:hover { background: rgba(160, 60, 90, 0.18); color: #e090b0; }
+  .site-nav-dropdown-item--danger { color: #d06070; }
+  .site-nav-dropdown-item--danger:hover { background: rgba(180, 40, 40, 0.15); color: #f08888; }
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .site-top-nav { top: 12px; left: 12px; gap: 6px; }
+  .site-nav-btn { padding: 5px 10px; font-size: 11.5px; }
+  .site-nav-avatar-name { display: none; }
+  .site-nav-avatar-btn { padding: 4px; }
+}

@@ -6,6 +6,7 @@
 @import "../styles/Timeline.css";
 @import "../styles/Tag.css";
 @import "../styles/easter-eggs.css";
+@import "../styles/site-top-nav.css";
 
 :root {
   --text: #6b6375;

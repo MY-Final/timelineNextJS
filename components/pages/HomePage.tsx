@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { BookOpen, Heart, Settings, User } from "lucide-react";
-import { isAdmin, isLoggedIn } from "@/lib/auth-role";
+import { BookOpen, Heart, User } from "lucide-react";
 import ILoveYouDisplay from "@/components/easter-eggs/ILoveYouDisplay";
 import {
   isAnniversary,
@@ -81,7 +79,6 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
 }
 
 export default function HomePage() {
-  const router = useRouter();
   const { days, hours, minutes, seconds } = useLoveTimer(LOVE_START_DATE);
   const { hearts, spawn: spawnHearts } = useFloatingHearts(12);
   const { active: secretMode, click: handleSecretClick } = useSecretClick(10, 400);
@@ -94,23 +91,10 @@ export default function HomePage() {
   } = useLongPress(2000);
   const { active: iLoveYouActive, stage: iLoveYouStage, inputProgress, target } = useILoveYou();
   const [anniversaryToday, setAnniversaryToday] = useState(false);
-  const [showAdminEntry, setShowAdminEntry] = useState(false);
 
   useEffect(() => {
     setAnniversaryToday(isAnniversary(LOVE_START_DATE));
-    setShowAdminEntry(isAdmin());
   }, []);
-
-  function handleAdminClick() {
-    if (!isLoggedIn()) {
-      router.push("/login");
-      return;
-    }
-    if (isAdmin()) {
-      router.push("/admin");
-    }
-    // 普通用户不跳转，按钮本身也不展示，此处为双重保险
-  }
 
   return (
     <main
@@ -242,13 +226,6 @@ export default function HomePage() {
       </div>
 
       {iLoveYouStage === 4 && <ILoveYouDisplay />}
-
-      {showAdminEntry && (
-        <button className="home-admin-entry" title="控制台" onClick={handleAdminClick}>
-          <Settings size={13} strokeWidth={1.8} aria-hidden="true" />
-          控制台
-        </button>
-      )}
     </main>
   );
 }

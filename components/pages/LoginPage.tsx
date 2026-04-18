@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Heart, KeyRound, Lock, LogIn, Mail, User, UserPlus } from "lucide-react";
 import "@/styles/Login.css";
 
@@ -108,7 +108,18 @@ function CodeField({ email, purpose, value, onChange }: {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("login");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as Mode | null;
+  const validModes: Mode[] = ["login", "register", "forgot", "change"];
+  const [mode, setMode] = useState<Mode>(
+    tabParam && validModes.includes(tabParam) ? tabParam : "login"
+  );
+
+  // 如果 URL tab 参数变化（如从导航栏跳转）也要同步
+  useEffect(() => {
+    if (tabParam && validModes.includes(tabParam)) setMode(tabParam);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
