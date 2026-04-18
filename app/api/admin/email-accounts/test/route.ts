@@ -3,13 +3,38 @@ import { getAuthUser } from "@/lib/auth";
 import pool from "@/lib/db";
 import { errorResponse, successResponse, ResultCode } from "@/lib/result";
 import nodemailer from "nodemailer";
+import { defaultOtpHtml } from "@/lib/mailer";
+import { readFile } from "fs/promises";
+import path from "path";
+
+const TEMPLATE_FILE = path.join(process.cwd(), "data", "email-templates.json");
+
+interface TemplateDef {
+  useCustom: boolean;
+  customSubject: string;
+  customHtml: string;
+}
+
+async function getTemplate(type: "register" | "reset"): Promise<TemplateDef> {
+  try {
+    const raw = await readFile(TEMPLATE_FILE, "utf-8");
+    const store = JSON.parse(raw);
+    return store[type] ?? { useCustom: false, customSubject: "", customHtml: "" };
+  } catch {
+    return { useCustom: false, customSubject: "", customHtml: "" };
+  }
+}
+
+function renderTemplate(html: string, vars: Record<string, string>): string {
+  return html.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
+}
 
 export async function POST(request: NextRequest) {
   const auth = await getAuthUser(request);
   if (auth instanceof NextResponse) return auth;
   if (auth.role !== "superadmin") return errorResponse(ResultCode.FORBIDDEN, "无权操作");
 
-  const { account_id, to } = await request.json();
+  const { account_id, to, template_type } = await request.json();
   if (!account_id || !to) return errorResponse(ResultCode.BAD_REQUEST, "缺少参数");
 
   const { rows } = await pool.query(
@@ -19,6 +44,24 @@ export async function POST(request: NextRequest) {
   if (rows.length === 0) return errorResponse(ResultCode.NOT_FOUND, "账号不存在");
 
   const acc = rows[0];
+
+  // 决定邮件内容
+  const type: "register" | "reset" = template_type === "reset" ? "reset" : "register";
+  const title = type === "register" ? "注册验证码" : "密码重置验证码";
+  const action = type === "register" ? "完成注册" : "重置密码";
+  const previewCode = "AB1234";
+
+  const tpl = await getTemplate(type);
+  let subject = `【Our Story】${title} — 测试预览`;
+  let html: string;
+
+  if (tpl.useCustom && tpl.customHtml) {
+    const vars = { code: previewCode, title, action, site: "Our Story" };
+    html = renderTemplate(tpl.customHtml, vars);
+    if (tpl.customSubject) subject = renderTemplate(tpl.customSubject, vars) + " — 测试预览";
+  } else {
+    html = defaultOtpHtml(previewCode, title, action);
+  }
 
   try {
     const transport = nodemailer.createTransport({
@@ -31,17 +74,8 @@ export async function POST(request: NextRequest) {
     await transport.sendMail({
       from: acc.from_name ? `"${acc.from_name}" <${acc.user_addr}>` : acc.user_addr,
       to,
-      subject: "【测试邮件】SMTP 配置验证",
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;border:1px solid #eee;border-radius:12px">
-          <h2 style="color:#c0446a;margin:0 0 16px">✅ SMTP 配置验证成功</h2>
-          <p style="color:#555;line-height:1.7">
-            这是一封测试邮件，说明账号 <strong>${acc.name}</strong>（<code>${acc.user_addr}</code>）的 SMTP 配置正确，可以正常发送邮件。
-          </p>
-          <hr style="border:none;border-top:1px solid #eee;margin:20px 0" />
-          <p style="font-size:12px;color:#aaa">此邮件由系统自动发送，请勿回复。</p>
-        </div>
-      `,
+      subject,
+      html,
     });
 
     return successResponse({ message: "测试邮件发送成功" }, "发送成功");
@@ -50,3 +84,4 @@ export async function POST(request: NextRequest) {
     return errorResponse(ResultCode.UPSTREAM_ERROR, `发送失败：${message}`);
   }
 }
+

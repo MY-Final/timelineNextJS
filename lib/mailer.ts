@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import { readFile } from 'fs/promises';
+import path from 'path';
 import pool from './db';
 
 export interface EmailAccount {
@@ -13,6 +15,47 @@ export interface EmailAccount {
   is_active: boolean;
   use_for_reg: boolean;
   use_for_pwd: boolean;
+}
+
+const TEMPLATE_FILE = path.join(process.cwd(), 'data', 'email-templates.json');
+
+interface TemplateDef {
+  useCustom: boolean;
+  customSubject: string;
+  customHtml: string;
+}
+
+async function getTemplate(type: 'register' | 'reset'): Promise<TemplateDef> {
+  try {
+    const raw = await readFile(TEMPLATE_FILE, 'utf-8');
+    const store = JSON.parse(raw);
+    return store[type] ?? { useCustom: false, customSubject: '', customHtml: '' };
+  } catch {
+    return { useCustom: false, customSubject: '', customHtml: '' };
+  }
+}
+
+/** 默认注册验证码 HTML 模板 */
+export function defaultOtpHtml(code: string, title: string, action: string): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #fff5f7; border-radius: 16px;">
+      <h2 style="color: #c0446a; margin: 0 0 16px; font-size: 20px;">Our Story — ${title}</h2>
+      <p style="color: #6b5060; font-size: 14px; line-height: 1.8; margin: 0 0 24px;">
+        您正在${action}，验证码如下，<strong>有效期 5 分钟</strong>，请勿泄露给他人。
+      </p>
+      <div style="background: #fff; border: 2px solid #f9a8c9; border-radius: 12px; text-align: center; padding: 20px 0; margin: 0 0 24px;">
+        <span style="font-size: 36px; font-weight: 700; letter-spacing: 12px; color: #c0446a;">${code}</span>
+      </div>
+      <p style="color: #b090a8; font-size: 12px; margin: 0;">
+        如非本人操作，请忽略此邮件。
+      </p>
+    </div>
+  `;
+}
+
+/** 将模板中的占位符替换为实际值 */
+function renderTemplate(html: string, vars: Record<string, string>): string {
+  return html.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '');
 }
 
 /**
@@ -65,23 +108,22 @@ export async function sendOtpMail(
   const title = purpose === 'register' ? '注册验证码' : '密码重置验证码';
   const action = purpose === 'register' ? '完成注册' : '重置密码';
 
-  const html = `
-    <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #fff5f7; border-radius: 16px;">
-      <h2 style="color: #c0446a; margin: 0 0 16px; font-size: 20px;">Our Story — ${title}</h2>
-      <p style="color: #6b5060; font-size: 14px; line-height: 1.8; margin: 0 0 24px;">
-        您正在${action}，验证码如下，<strong>有效期 5 分钟</strong>，请勿泄露给他人。
-      </p>
-      <div style="background: #fff; border: 2px solid #f9a8c9; border-radius: 12px; text-align: center; padding: 20px 0; margin: 0 0 24px;">
-        <span style="font-size: 36px; font-weight: 700; letter-spacing: 12px; color: #c0446a;">${code}</span>
-      </div>
-      <p style="color: #b090a8; font-size: 12px; margin: 0;">
-        如非本人操作，请忽略此邮件。
-      </p>
-    </div>
-  `;
+  const tpl = await getTemplate(purpose);
+  let subject = `【Our Story】${title}`;
+  let html: string;
+
+  if (tpl.useCustom && tpl.customHtml) {
+    const vars = { code, title, action, site: 'Our Story' };
+    html = renderTemplate(tpl.customHtml, vars);
+    if (tpl.customSubject) {
+      subject = renderTemplate(tpl.customSubject, vars);
+    }
+  } else {
+    html = defaultOtpHtml(code, title, action);
+  }
 
   try {
-    await sendMail(account, to, `【Our Story】${title}`, html);
+    await sendMail(account, to, subject, html);
     return { success: true, message: '验证码已发送' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

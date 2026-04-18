@@ -1,0 +1,12 @@
+{
+  "register": {
+    "useCustom": false,
+    "customSubject": "",
+    "customHtml": ""
+  },
+  "reset": {
+    "useCustom": false,
+    "customSubject": "",
+    "customHtml": ""
+  }
+}

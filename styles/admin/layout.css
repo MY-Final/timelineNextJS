@@ -273,7 +273,7 @@
 
 /* ---------- Mobile: collapse sidebar ---------- */
 @media (max-width: 768px) {
-  .admin-sidebar { width: 64px; }
+  .admin-sidebar { width: 56px; }
   .admin-brand-text,
   .admin-nav-section,
   .admin-nav-item span,
@@ -281,12 +281,13 @@
   .admin-logout-btn span,
   .admin-back-btn span,
   .admin-back-ext,
-  .admin-header-front-btn span,
-  .admin-breadcrumb { display: none; }
+  .admin-header-front-btn span { display: none; }
   .admin-nav-item { justify-content: center; padding: 10px; }
-  .admin-brand { justify-content: center; padding: 20px 10px; }
+  .admin-brand { justify-content: center; padding: 18px 8px; }
   .admin-user-info { justify-content: center; }
-  .admin-logout-btn { justify-content: center; }
+  .admin-logout-btn { justify-content: center; padding: 8px; }
   .admin-back-btn { justify-content: center; padding: 8px; }
-  .admin-main { margin-left: 64px; }
+  .admin-main { margin-left: 56px; }
+  .admin-header { padding: 0 12px; min-height: 48px; }
+  .admin-content { padding: 14px 12px; }
 }

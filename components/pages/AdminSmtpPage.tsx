@@ -5,7 +5,7 @@ import AdminLayout from "@/components/pages/AdminLayout";
 import {
   Mail, Plus, Trash2, Loader2, CheckSquare, Square,
   ChevronLeft, ChevronRight, X, Edit3, ToggleLeft, ToggleRight,
-  Send, TestTube,
+  Send, TestTube, FileText, Eye, Pencil, RotateCcw,
 } from "lucide-react";
 import ConfirmDialog, { type ConfirmDialogProps } from "@/components/ui/common/ConfirmDialog";
 
@@ -153,6 +153,7 @@ function TestSendModal({
 }) {
   const [accountId, setAccountId] = useState(accounts[0]?.id ? String(accounts[0].id) : "");
   const [to, setTo] = useState("");
+  const [templateType, setTemplateType] = useState<"register" | "reset">("register");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -164,7 +165,7 @@ function TestSendModal({
       const res = await fetch("/api/admin/email-accounts/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account_id: parseInt(accountId), to }),
+        body: JSON.stringify({ account_id: parseInt(accountId), to, template_type: templateType }),
       });
       const json = await res.json();
       setResult({ ok: json.code === 0, msg: json.code === 0 ? "发送成功！请检查收件箱。" : (json.message || "发送失败") });
@@ -194,6 +195,13 @@ function TestSendModal({
             </select>
           </div>
           <div className="admin-form-row">
+            <label className="admin-form-label">邮件模板类型</label>
+            <select className="admin-input" value={templateType} onChange={e => setTemplateType(e.target.value as "register" | "reset")}>
+              <option value="register">注册验证码模板</option>
+              <option value="reset">密码重置模板</option>
+            </select>
+          </div>
+          <div className="admin-form-row">
             <label className="admin-form-label">收件人邮箱 *</label>
             <input
               className="admin-input"
@@ -204,6 +212,9 @@ function TestSendModal({
               required
             />
           </div>
+          <p style={{ fontSize: 12, color: "var(--muted-deep)", margin: 0 }}>
+            将以 <strong>AB1234</strong> 作为示例验证码，使用当前已保存的模板发送预览邮件。
+          </p>
           {result && (
             <p style={{ fontSize: 13, margin: 0, color: result.ok ? "#27ae60" : "#c0392b", textAlign: "center" }}>
               {result.ok ? "✅ " : "❌ "}{result.msg}
@@ -218,6 +229,221 @@ function TestSendModal({
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+// ── 默认模板 HTML（与 mailer.ts 保持一致）──────────────────
+const DEFAULT_SUBJECT: Record<string, string> = {
+  register: "【Our Story】注册验证码",
+  reset: "【Our Story】密码重置验证码",
+};
+
+function buildDefaultHtml(type: "register" | "reset"): string {
+  const title = type === "register" ? "注册验证码" : "密码重置验证码";
+  const action = type === "register" ? "完成注册" : "重置密码";
+  const code = "AB1234";
+  return `<div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #fff5f7; border-radius: 16px;">
+  <h2 style="color: #c0446a; margin: 0 0 16px; font-size: 20px;">Our Story — ${title}</h2>
+  <p style="color: #6b5060; font-size: 14px; line-height: 1.8; margin: 0 0 24px;">
+    您正在${action}，验证码如下，<strong>有效期 5 分钟</strong>，请勿泄露给他人。
+  </p>
+  <div style="background: #fff; border: 2px solid #f9a8c9; border-radius: 12px; text-align: center; padding: 20px 0; margin: 0 0 24px;">
+    <span style="font-size: 36px; font-weight: 700; letter-spacing: 12px; color: #c0446a;">{{code}}</span>
+  </div>
+  <p style="color: #b090a8; font-size: 12px; margin: 0;">
+    如非本人操作，请忽略此邮件。
+  </p>
+</div>`.replace("{{code}}", code);
+}
+
+interface TemplateState {
+  useCustom: boolean;
+  customSubject: string;
+  customHtml: string;
+}
+
+// ── 邮件模板面板 ──────────────────────────────────────────
+function EmailTemplatePanel() {
+  const [activeTab, setActiveTab] = useState<"register" | "reset">("register");
+  const [templates, setTemplates] = useState<Record<string, TemplateState>>({
+    register: { useCustom: false, customSubject: "", customHtml: "" },
+    reset: { useCustom: false, customSubject: "", customHtml: "" },
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/email-templates")
+      .then(r => r.json())
+      .then(json => {
+        if (json.code === 0) setTemplates(json.data);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  function updateTab(key: keyof TemplateState, value: string | boolean) {
+    setTemplates(prev => ({ ...prev, [activeTab]: { ...prev[activeTab], [key]: value } }));
+    setSaveMsg(null);
+  }
+
+  async function handleSave() {
+    setSaving(true); setSaveMsg(null);
+    try {
+      const res = await fetch("/api/admin/email-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: activeTab, ...templates[activeTab] }),
+      });
+      const json = await res.json();
+      setSaveMsg({ ok: json.code === 0, text: json.code === 0 ? "模板已保存" : (json.message || "保存失败") });
+    } catch {
+      setSaveMsg({ ok: false, text: "网络异常" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleReset() {
+    updateTab("useCustom", false);
+    updateTab("customSubject", "");
+    updateTab("customHtml", "");
+  }
+
+  const tpl = templates[activeTab];
+  const previewContent = tpl.useCustom && tpl.customHtml
+    ? tpl.customHtml.replace(/\{\{(\w+)\}\}/g, (_, k) =>
+        ({ code: "AB1234", title: activeTab === "register" ? "注册验证码" : "密码重置验证码",
+           action: activeTab === "register" ? "完成注册" : "重置密码", site: "Our Story" } as Record<string, string>)[k] ?? "")
+    : buildDefaultHtml(activeTab);
+
+  return (
+    <div className="admin-panel" style={{ marginTop: 20 }}>
+      <h2 className="admin-panel-title" style={{ marginBottom: 4 }}>
+        <FileText size={15} strokeWidth={1.8} />
+        邮件模板管理
+      </h2>
+      <p style={{ fontSize: 12.5, color: "var(--muted-deep)", margin: "0 0 16px" }}>
+        配置注册验证码和密码重置邮件的 HTML 模板。支持使用占位符：
+        <code style={{ background: "rgba(212,92,128,0.1)", padding: "1px 5px", borderRadius: 4 }}>{"{{code}}"}</code>、
+        <code style={{ background: "rgba(212,92,128,0.1)", padding: "1px 5px", borderRadius: 4 }}>{"{{title}}"}</code>、
+        <code style={{ background: "rgba(212,92,128,0.1)", padding: "1px 5px", borderRadius: 4 }}>{"{{action}}"}</code>、
+        <code style={{ background: "rgba(212,92,128,0.1)", padding: "1px 5px", borderRadius: 4 }}>{"{{site}}"}</code>
+      </p>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: "1px solid var(--border-soft)", paddingBottom: 0 }}>
+        {(["register", "reset"] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => { setActiveTab(tab); setSaveMsg(null); }}
+            style={{
+              padding: "7px 16px", border: "none", cursor: "pointer", fontWeight: 500,
+              fontSize: 13, borderRadius: "8px 8px 0 0", transition: "all 0.15s",
+              background: activeTab === tab ? "rgba(212,92,128,0.12)" : "transparent",
+              color: activeTab === tab ? "#a0254a" : "var(--muted-deep)",
+              borderBottom: activeTab === tab ? "2px solid #c0446a" : "2px solid transparent",
+            }}
+          >
+            {tab === "register" ? "注册验证码" : "密码重置"}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: "32px 0" }}>
+          <Loader2 size={20} className="admin-upload-spin" style={{ opacity: 0.4 }} />
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* 模式切换 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>使用模板：</span>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13 }}>
+              <input type="radio" name={`tpl-mode-${activeTab}`} checked={!tpl.useCustom} onChange={() => updateTab("useCustom", false)} style={{ accentColor: "#c0446a" }} />
+              默认模板
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13 }}>
+              <input type="radio" name={`tpl-mode-${activeTab}`} checked={tpl.useCustom} onChange={() => updateTab("useCustom", true)} style={{ accentColor: "#c0446a" }} />
+              自定义模板
+            </label>
+          </div>
+
+          {tpl.useCustom && (
+            <>
+              <div className="admin-form-row">
+                <label className="admin-form-label">邮件主题（留空则使用默认：{DEFAULT_SUBJECT[activeTab]}）</label>
+                <input
+                  className="admin-input"
+                  value={tpl.customSubject}
+                  onChange={e => updateTab("customSubject", e.target.value)}
+                  placeholder={DEFAULT_SUBJECT[activeTab]}
+                  style={{ width: "100%", boxSizing: "border-box" }}
+                />
+              </div>
+              <div className="admin-form-row">
+                <label className="admin-form-label">HTML 模板内容 *</label>
+                <textarea
+                  value={tpl.customHtml}
+                  onChange={e => updateTab("customHtml", e.target.value)}
+                  placeholder="<div>你的 HTML 邮件内容，使用 {{code}} 等占位符</div>"
+                  style={{
+                    width: "100%", boxSizing: "border-box", minHeight: 200,
+                    padding: "10px 12px", borderRadius: 8, fontSize: 12.5,
+                    fontFamily: "monospace", border: "1px solid var(--border-soft)",
+                    background: "var(--bg)", color: "var(--text)", resize: "vertical", outline: "none",
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* 预览区域 */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 500, color: "var(--text)" }}>
+                {tpl.useCustom ? "自定义模板预览" : "默认模板预览"}
+              </span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {tpl.useCustom && (
+                  <button className="admin-action-btn" onClick={handleReset} title="重置为默认模板">
+                    <RotateCcw size={12} />重置默认
+                  </button>
+                )}
+                <button
+                  className="admin-action-btn"
+                  onClick={() => setPreviewHtml(previewHtml ? null : previewContent)}
+                >
+                  <Eye size={12} />{previewHtml ? "收起预览" : "展开预览"}
+                </button>
+              </div>
+            </div>
+            {previewHtml && (
+              <iframe
+                srcDoc={previewHtml}
+                style={{ width: "100%", minHeight: 320, border: "1px solid var(--border-soft)", borderRadius: 8 }}
+                sandbox="allow-same-origin"
+                title="邮件预览"
+              />
+            )}
+          </div>
+
+          {/* 保存 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end" }}>
+            {saveMsg && (
+              <span style={{ fontSize: 13, color: saveMsg.ok ? "#27ae60" : "#c0392b" }}>
+                {saveMsg.ok ? "✅ " : "❌ "}{saveMsg.text}
+              </span>
+            )}
+            <button className="admin-btn admin-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 size={13} className="admin-upload-spin" /> : <Pencil size={13} />}
+              {saving ? "保存中…" : "保存模板"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -485,6 +711,9 @@ export default function AdminSmtpPage() {
           </div>
         </div>
       )}
+
+      {/* ── 邮件模板管理 ── */}
+      <EmailTemplatePanel />
 
       {/* 表单弹窗 */}
       {formModal && (

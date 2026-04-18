@@ -170,10 +170,6 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
             <button className="admin-header-icon-btn" title="通知" aria-label="通知">
               <Bell size={16} strokeWidth={1.8} />
             </button>
-            <Link href="/" className="admin-header-front-btn" title="查看前台">
-              <ExternalLink size={13} strokeWidth={1.8} />
-              <span>前台</span>
-            </Link>
           </div>
         </header>
         <main className="admin-content">{children}</main>
