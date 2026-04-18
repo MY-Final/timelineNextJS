@@ -10,6 +10,62 @@ function isAdminOrSuper(role: string) {
   return role === 'superadmin' || role === 'admin';
 }
 
+/**
+ * @swagger
+ * /api/admin/users/{id}:
+ *   get:
+ *     summary: 获取单个用户详情
+ *     tags: [Admin/Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 用户详情
+ *   patch:
+ *     summary: 更新用户信息
+ *     tags: [Admin/Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nickname: { type: string }
+ *               email: { type: string }
+ *               phone: { type: string }
+ *               role: { type: string, enum: [superadmin, admin, user] }
+ *               is_active: { type: boolean }
+ *               password: { type: string, description: 留空则不修改 }
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *   delete:
+ *     summary: 删除用户
+ *     tags: [Admin/Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ */
+
 /** GET /api/admin/users/[id] */
 export async function GET(request: NextRequest, { params }: Params) {
   const auth = getAuthUser(request);

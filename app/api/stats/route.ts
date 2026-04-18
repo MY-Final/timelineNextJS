@@ -3,6 +3,32 @@ import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/stats:
+ *   get:
+ *     summary: 获取后台统计数据（帖子数、今日新增、评论数、点赞数）
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: 统计数据
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code: { type: integer, example: 0 }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalPosts: { type: integer }
+ *                     todayPosts: { type: integer }
+ *                     totalComments: { type: integer }
+ *                     totalLikes: { type: integer }
+ */
+
 // ─────────────────────────────────────────────
 // GET /api/stats   管理后台统计数据
 // ─────────────────────────────────────────────

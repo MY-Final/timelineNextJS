@@ -3,6 +3,33 @@ import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/admin/email-accounts/batch:
+ *   post:
+ *     summary: 批量操作邮箱账号（仅超级管理员）
+ *     tags: [Admin/EmailAccounts]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [action, ids]
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [enable, disable, delete]
+ *               ids:
+ *                 type: array
+ *                 items: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 操作成功
+ */
+
 /** POST /api/admin/email-accounts/batch */
 export async function POST(request: NextRequest) {
   const auth = getAuthUser(request);

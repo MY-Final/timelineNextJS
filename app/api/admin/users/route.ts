@@ -4,6 +4,59 @@ import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     summary: 用户列表（分页+筛选，admin/superadmin）
+ *     tags: [Admin/Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: 搜索用户名/昵称/邮箱
+ *       - in: query
+ *         name: role
+ *         schema: { type: string, enum: [superadmin, admin, user] }
+ *       - in: query
+ *         name: is_active
+ *         schema: { type: string, enum: [true, false] }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: 分页用户列表
+ *   post:
+ *     summary: 新建用户（admin创建user，superadmin可创建任意角色）
+ *     tags: [Admin/Users]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username: { type: string }
+ *               password: { type: string }
+ *               nickname: { type: string }
+ *               email: { type: string }
+ *               phone: { type: string }
+ *               role: { type: string, enum: [superadmin, admin, user], default: user }
+ *               is_active: { type: boolean, default: true }
+ *     responses:
+ *       200:
+ *         description: 创建成功
+ */
+
 /** GET /api/admin/users — 用户列表（分页+筛选） */
 export async function GET(request: NextRequest) {
   const auth = getAuthUser(request);

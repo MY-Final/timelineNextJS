@@ -5,6 +5,53 @@ import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
 type Params = { params: Promise<{ id: string }> };
 
+/**
+ * @swagger
+ * /api/admin/email-accounts/{id}:
+ *   patch:
+ *     summary: 更新邮箱账号（仅超级管理员）
+ *     tags: [Admin/EmailAccounts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               host: { type: string }
+ *               port: { type: integer }
+ *               secure: { type: boolean }
+ *               user_addr: { type: string }
+ *               password: { type: string }
+ *               from_name: { type: string }
+ *               is_active: { type: boolean }
+ *               use_for_reg: { type: boolean }
+ *               use_for_pwd: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *   delete:
+ *     summary: 删除邮箱账号（仅超级管理员）
+ *     tags: [Admin/EmailAccounts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ */
+
 /** PATCH /api/admin/email-accounts/[id] */
 export async function PATCH(request: NextRequest, { params }: Params) {
   const auth = getAuthUser(request);

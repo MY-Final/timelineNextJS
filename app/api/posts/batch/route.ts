@@ -3,6 +3,34 @@ import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/posts/batch:
+ *   post:
+ *     summary: 批量操作帖子（publish/unpublish/hide/show/delete）
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [action, ids]
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [publish, unpublish, hide, show, delete]
+ *               ids:
+ *                 type: array
+ *                 items: { type: integer }
+ *                 maxItems: 200
+ *     responses:
+ *       200:
+ *         description: 操作成功
+ */
+
 // ─────────────────────────────────────────────
 // POST /api/posts/batch   批量操作帖子
 // ─────────────────────────────────────────────

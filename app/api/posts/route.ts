@@ -3,6 +3,67 @@ import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/posts:
+ *   get:
+ *     summary: 帖子列表（管理后台，支持分页筛选）
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [published, draft, deleted, all] }
+ *       - in: query
+ *         name: is_public
+ *         schema: { type: string, enum: [true, false] }
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: 标题/作者模糊搜索
+ *       - in: query
+ *         name: created_from
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: created_to
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: tag
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: 分页帖子列表
+ *   post:
+ *     summary: 新建帖子
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title]
+ *             properties:
+ *               title: { type: string }
+ *               content: { type: string }
+ *               status: { type: string, enum: [published, draft], default: draft }
+ *               is_public: { type: boolean, default: true }
+ *               tags: { type: array, items: { type: string } }
+ *               event_date: { type: string, format: date }
+ *     responses:
+ *       200:
+ *         description: 创建成功
+ */
+
 // ─────────────────────────────────────────────
 // GET /api/posts   帖子列表（管理后台用）
 // ─────────────────────────────────────────────

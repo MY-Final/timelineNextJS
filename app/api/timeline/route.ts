@@ -2,6 +2,17 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/timeline:
+ *   get:
+ *     summary: 获取时光轴数据（公开接口，返回已发布+公开帖子，附带图片）
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: 时光轴帖子列表（按 event_date 排序）
+ */
+
 // ─────────────────────────────────────────────
 // GET /api/timeline
 // 返回所有 published + public 帖子，按 event_date（或 created_at）排序

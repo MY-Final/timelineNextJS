@@ -3,6 +3,59 @@ import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/admin/email-accounts:
+ *   get:
+ *     summary: 获取邮箱账号列表（仅超级管理员）
+ *     tags: [Admin/EmailAccounts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: 搜索名称/邮箱
+ *       - in: query
+ *         name: is_active
+ *         schema: { type: string, enum: [true, false] }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: 分页列表
+ *   post:
+ *     summary: 新建邮箱账号（仅超级管理员）
+ *     tags: [Admin/EmailAccounts]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, host, port, user_addr, password]
+ *             properties:
+ *               name: { type: string }
+ *               host: { type: string, example: smtp.qq.com }
+ *               port: { type: integer, example: 465 }
+ *               secure: { type: boolean, default: true }
+ *               user_addr: { type: string }
+ *               password: { type: string }
+ *               from_name: { type: string }
+ *               is_active: { type: boolean, default: true }
+ *               use_for_reg: { type: boolean, default: false }
+ *               use_for_pwd: { type: boolean, default: false }
+ *     responses:
+ *       200:
+ *         description: 创建成功
+ */
+
 /** GET /api/admin/email-accounts */
 export async function GET(request: NextRequest) {
   const auth = getAuthUser(request);

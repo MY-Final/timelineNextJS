@@ -4,6 +4,28 @@ import pool from '@/lib/db';
 import { getOtp, delOtp } from '@/lib/redis';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: 通过邮箱验证码重置密码（无需登录）
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, code, newPassword]
+ *             properties:
+ *               email: { type: string }
+ *               code: { type: string, description: 邮箱验证码 }
+ *               newPassword: { type: string }
+ *     responses:
+ *       200:
+ *         description: 密码重置成功
+ */
+
 /** POST /api/auth/reset-password
  * body: { email, code, newPassword }
  * 无需登录，通过邮箱验证码重置密码

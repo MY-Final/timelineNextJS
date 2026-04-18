@@ -5,6 +5,62 @@ import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
 type Params = { params: Promise<{ id: string }> };
 
+/**
+ * @swagger
+ * /api/posts/{id}:
+ *   get:
+ *     summary: 获取帖子详情
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 帖子详情
+ *   patch:
+ *     summary: 更新帖子
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               content: { type: string }
+ *               status: { type: string, enum: [published, draft] }
+ *               is_public: { type: boolean }
+ *               tags: { type: array, items: { type: string } }
+ *               event_date: { type: string, format: date }
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *   delete:
+ *     summary: 删除帖子
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ */
+
 // ─────────────────────────────────────────────
 // GET /api/posts/[id]   帖子详情
 // ─────────────────────────────────────────────
