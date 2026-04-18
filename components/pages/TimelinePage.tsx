@@ -2,10 +2,13 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowUp, ArrowUpDown, Calendar, Heart, Loader2, Tag } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowUpDown, Calendar, Heart, Loader2, MessageSquare, Tag } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/common/ImageLightbox";
 import { useFloatingHearts, useMouseTrail, useSecretClick } from "@/lib/easter-eggs";
 import { getCardTransform } from "@/lib/gallery";
+import dynamic from "next/dynamic";
+
+const CommentPanel = dynamic(() => import("@/components/ui/common/CommentPanel"), { ssr: false });
 
 interface TimelinePostImage {
   url: string;
@@ -21,6 +24,9 @@ interface TimelineEventData {
   description: string;
   images: string[];
   tags: string[];
+  like_count: number;
+  comment_count: number;
+  is_liked: boolean;
 }
 
 function mapApiPost(p: {
@@ -31,6 +37,9 @@ function mapApiPost(p: {
   event_date: string | null;
   created_at: string;
   images: TimelinePostImage[];
+  like_count: number;
+  comment_count: number;
+  is_liked: boolean;
 }): TimelineEventData {
   return {
     id: p.id,
@@ -39,6 +48,9 @@ function mapApiPost(p: {
     description: p.content,
     images: p.images.map((img) => img.url),
     tags: p.tags ?? [],
+    like_count: p.like_count ?? 0,
+    comment_count: p.comment_count ?? 0,
+    is_liked: p.is_liked ?? false,
   };
 }
 
@@ -158,16 +170,54 @@ const EventCard = memo(function EventCard({
   isActive,
   cardRef,
   onActivate,
+  onOpenComments,
 }: {
   event: TimelineEventData;
   index: number;
   isActive: boolean;
   cardRef: (el: HTMLDivElement | null) => void;
   onActivate: () => void;
+  onOpenComments: (event: TimelineEventData, onDelta: (d: number) => void) => void;
 }) {
   const isEven = index % 2 === 0;
   const { ref: revealRef, revealed } = useScrollReveal(0.12);
   const { hearts: floatingHearts, spawn: spawnHeart } = useFloatingHearts(6);
+  const [likeCount, setLikeCount] = useState(event.like_count);
+  const [liked, setLiked] = useState(event.is_liked);
+  const [liking, setLiking] = useState(false);
+  const [commentCount, setCommentCount] = useState(event.comment_count);
+
+  async function handleLikePost(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (liking) return;
+    // 乐观更新
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount(c => wasLiked ? c - 1 : c + 1);
+    setLiking(true);
+    try {
+      const res = await fetch(`/api/posts/${event.id}/like`, { method: "POST" });
+      const text = await res.text();
+      if (text) {
+        const json = JSON.parse(text);
+        if (json.code === 0) {
+          setLiked(json.data.liked);
+          setLikeCount(json.data.like_count);
+        } else {
+          // 回滚
+          setLiked(wasLiked);
+          setLikeCount(c => wasLiked ? c + 1 : c - 1);
+          if (json.code === 40100) alert("请先登录后再点赞");
+          else if (json.code !== 0) alert("点赞失败，请稍后重试");
+        }
+      }
+    } catch {
+      setLiked(wasLiked);
+      setLikeCount(c => wasLiked ? c + 1 : c - 1);
+    } finally {
+      setLiking(false);
+    }
+  }
 
   return (
     <div
@@ -227,6 +277,26 @@ const EventCard = memo(function EventCard({
             ))}
           </div>
         )}
+
+        {/* 点赞 + 评论计数行 */}
+        <div className="event-stats">
+          <button
+            className={`event-stat event-stat--btn event-stat--like ${liked ? "liked" : ""}`}
+            onClick={handleLikePost}
+            disabled={liking}
+            title="点赞"
+          >
+            <Heart size={12} fill={liked ? "currentColor" : "none"} strokeWidth={1.8} />
+            {likeCount > 0 ? likeCount : ""}
+          </button>
+          <button
+            className="event-stat event-stat--btn"
+            onClick={(e) => { e.stopPropagation(); onOpenComments(event, (d) => setCommentCount(c => c + d)); }}
+          >
+            <MessageSquare size={12} strokeWidth={1.8} />
+            {commentCount > 0 ? commentCount : ""}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -291,6 +361,8 @@ export default function TimelinePage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [ascending, setAscending] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [commentTarget, setCommentTarget] = useState<TimelineEventData | null>(null);
+  const commentDeltaCbRef = useRef<((d: number) => void) | null>(null);
   const { active: secretMode, click: secretClick } = useSecretClick(7, 500);
 
   useMouseTrail();
@@ -434,6 +506,7 @@ export default function TimelinePage() {
                   sectionRefs.current[index] = el;
                 }}
                 onActivate={() => scrollToSection(index)}
+                onOpenComments={(ev, onDelta) => { commentDeltaCbRef.current = onDelta; setCommentTarget(ev); }}
               />
             ))}
           </div>
@@ -452,6 +525,17 @@ export default function TimelinePage() {
         <button onClick={scrollToTop} className="scroll-to-top-btn" aria-label="回到顶部">
           <ArrowUp size={20} strokeWidth={2} />
         </button>
+      )}
+
+      {commentTarget && (
+        <CommentPanel
+          postId={commentTarget.id}
+          postTitle={commentTarget.title}
+          onClose={() => setCommentTarget(null)}
+          onCountChange={(delta) => {
+            commentDeltaCbRef.current?.(delta);
+          }}
+        />
       )}
     </div>
   );

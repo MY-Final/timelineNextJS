@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
+import { getAuthUser } from '@/lib/auth';
 
 /**
  * @swagger
@@ -19,7 +20,9 @@ import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 // 每个帖子附带 images 数组
 // ─────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = getAuthUser(request);
+  const currentUserId = auth instanceof NextResponse ? null : auth.userId;
   const client = await pool.connect();
   try {
     const rows = await client.query(`
@@ -30,6 +33,9 @@ export async function GET() {
         p.tags,
         p.event_date,
         p.created_at,
+        p.like_count,
+        p.comment_count,
+        CASE WHEN ul.id IS NOT NULL THEN true ELSE false END AS is_liked,
         COALESCE(
           json_agg(
             json_build_object(
@@ -44,11 +50,12 @@ export async function GET() {
         ) AS images
       FROM posts p
       LEFT JOIN post_images pi ON pi.post_id = p.id
+      LEFT JOIN likes ul ON ul.target_type = 'post' AND ul.target_id = p.id AND ul.user_id = $1
       WHERE p.status = 'published'
         AND p.is_public = true
-      GROUP BY p.id
+      GROUP BY p.id, ul.id
       ORDER BY COALESCE(p.event_date, p.created_at::date) DESC
-    `);
+    `, [currentUserId]);
 
     return successResponse(rows.rows);
   } catch (err) {
