@@ -5,7 +5,7 @@ import AdminLayout from "@/components/pages/AdminLayout";
 import {
   Mail, Plus, Trash2, Loader2, CheckSquare, Square,
   ChevronLeft, ChevronRight, X, Edit3, ToggleLeft, ToggleRight,
-  Send, TestTube, FileText, Eye, Pencil, RotateCcw,
+  Send, TestTube, FileText, Eye, Pencil, RotateCcw, RefreshCw,
 } from "lucide-react";
 import ConfirmDialog, { type ConfirmDialogProps } from "@/components/ui/common/ConfirmDialog";
 
@@ -334,22 +334,42 @@ function EmailTemplatePanel() {
       </p>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: "1px solid var(--border-soft)", paddingBottom: 0 }}>
-        {(["register", "reset"] as const).map(tab => (
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16, borderBottom: "1px solid var(--border-soft)" }}>
+        <div style={{ display: "flex", gap: 4 }}>
+          {(["register", "reset"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => { setActiveTab(tab); setSaveMsg(null); }}
+              style={{
+                padding: "7px 16px", border: "none", cursor: "pointer", fontWeight: 500,
+                fontSize: 13, borderRadius: "8px 8px 0 0", transition: "all 0.15s",
+                background: activeTab === tab ? "rgba(212,92,128,0.12)" : "transparent",
+                color: activeTab === tab ? "#a0254a" : "var(--muted-deep)",
+                borderBottom: activeTab === tab ? "2px solid #c0446a" : "2px solid transparent",
+              }}
+            >
+              {tab === "register" ? "注册验证码" : "密码重置"}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 6, paddingBottom: 6 }}>
+          {tpl.useCustom && (
+            <button className="admin-action-btn" onClick={handleReset} title="重置为默认模板">
+              <RotateCcw size={12} />重置默认
+            </button>
+          )}
+          {previewHtml && (
+            <button className="admin-action-btn" onClick={() => setPreviewHtml(previewContent)} title="刷新预览">
+              <RefreshCw size={12} />刷新预览
+            </button>
+          )}
           <button
-            key={tab}
-            onClick={() => { setActiveTab(tab); setSaveMsg(null); }}
-            style={{
-              padding: "7px 16px", border: "none", cursor: "pointer", fontWeight: 500,
-              fontSize: 13, borderRadius: "8px 8px 0 0", transition: "all 0.15s",
-              background: activeTab === tab ? "rgba(212,92,128,0.12)" : "transparent",
-              color: activeTab === tab ? "#a0254a" : "var(--muted-deep)",
-              borderBottom: activeTab === tab ? "2px solid #c0446a" : "2px solid transparent",
-            }}
+            className="admin-action-btn"
+            onClick={() => setPreviewHtml(previewHtml ? null : previewContent)}
           >
-            {tab === "register" ? "注册验证码" : "密码重置"}
+            <Eye size={12} />{previewHtml ? "收起预览" : "展开预览"}
           </button>
-        ))}
+        </div>
       </div>
 
       {loading ? (
@@ -401,34 +421,14 @@ function EmailTemplatePanel() {
           )}
 
           {/* 预览区域 */}
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 500, color: "var(--text)" }}>
-                {tpl.useCustom ? "自定义模板预览" : "默认模板预览"}
-              </span>
-              <div style={{ display: "flex", gap: 6 }}>
-                {tpl.useCustom && (
-                  <button className="admin-action-btn" onClick={handleReset} title="重置为默认模板">
-                    <RotateCcw size={12} />重置默认
-                  </button>
-                )}
-                <button
-                  className="admin-action-btn"
-                  onClick={() => setPreviewHtml(previewHtml ? null : previewContent)}
-                >
-                  <Eye size={12} />{previewHtml ? "收起预览" : "展开预览"}
-                </button>
-              </div>
-            </div>
-            {previewHtml && (
-              <iframe
-                srcDoc={previewHtml}
-                style={{ width: "100%", minHeight: 320, border: "1px solid var(--border-soft)", borderRadius: 8 }}
-                sandbox="allow-same-origin"
-                title="邮件预览"
-              />
-            )}
-          </div>
+          {previewHtml && (
+            <iframe
+              srcDoc={previewHtml}
+              style={{ width: "100%", minHeight: 320, border: "1px solid var(--border-soft)", borderRadius: 8 }}
+              sandbox="allow-same-origin"
+              title="邮件预览"
+            />
+          )}
 
           {/* 保存 */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end" }}>
