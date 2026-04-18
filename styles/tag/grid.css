@@ -159,4 +159,17 @@
   .tag-grid      { gap: 20px; }
   .tag-event-content { padding: 16px; }
   .tag-event-title   { font-size: 16px; }
+  /* 底部计数器上移，避免与 SiteTopNav 右下角重叠 */
+  .tag-footer    { bottom: 80px; }
+}
+
+@media (max-width: 480px) {
+  .tag-chips     { gap: 12px; }
+  .tag-chip      { font-size: 12px; padding: 6px 12px; }
+  .tag-event-description { -webkit-line-clamp: 2; }
+}
+
+/* Safe-area / notch */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .tag-shell { padding-bottom: env(safe-area-inset-bottom); }
 }

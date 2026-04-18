@@ -177,3 +177,10 @@
   .avatar-name-label { font-size: 12px; }
   .home-cta       { padding: 10px 20px; font-size: 11px; }
 }
+
+/* ---------- Safe-area / notch 兼容 ---------- */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .home-shell {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

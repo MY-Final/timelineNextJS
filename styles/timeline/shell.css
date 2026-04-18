@@ -75,6 +75,12 @@
 @media (min-width: 768px) {
   .timeline-main { padding: 60px 48px calc(100vh - 200px); }
 }
+@media (max-width: 767px) {
+  .timeline-main { padding-bottom: max(calc(100vh - 200px), 120px); }
+}
+@media (max-width: 480px) {
+  .timeline-main { padding: 40px 16px max(calc(100vh - 200px), 120px); }
+}
 
 /* ---------- Vertical center line ---------- */
 .timeline-line {
@@ -132,7 +138,7 @@
 /* ---------- Scroll-to-top button ---------- */
 .scroll-to-top-btn {
   position: fixed;
-  bottom: 28px; right: 28px;
+  bottom: 88px; right: 28px;
   z-index: 50;
   width: 48px; height: 48px;
   border-radius: 50%;
@@ -169,3 +175,8 @@
 
 /* ---------- Text selection ---------- */
 ::selection { background: rgba(251, 113, 133, 0.15); color: var(--rose-500); }
+
+/* ---------- Safe-area / notch 兼容 ---------- */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .app-shell { padding-bottom: env(safe-area-inset-bottom); }
+}

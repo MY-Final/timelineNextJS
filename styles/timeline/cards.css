@@ -894,3 +894,26 @@
   }
 }
 
+/* ── 移动端卡片布局补充 ── */
+@media (max-width: 767px) {
+  .timeline-events { gap: 72px; }
+  .fan-gallery      { width: 220px; height: 240px; }
+  .fan-card         { width: 136px; height: 181px; }
+  .event-title      { font-size: 22px; }
+  .timeline-card-content { padding: 0 16px 24px; }
+}
+
+@media (max-width: 480px) {
+  .timeline-events  { gap: 56px; }
+  .fan-gallery      { width: 190px; height: 210px; }
+  .fan-card         { width: 120px; height: 160px; }
+  .event-title      { font-size: 20px; }
+  .event-description p { font-size: 13px; line-height: 1.8; }
+  .timeline-card-content { padding: 0 12px 20px; }
+}
+
+@media (max-width: 360px) {
+  .fan-gallery { width: 170px; height: 190px; }
+  .fan-card    { width: 108px; height: 144px; }
+  .event-title { font-size: 18px; }
+}
