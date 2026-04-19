@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/generate-image-manifest.mjs",
-    "prebuild": "node scripts/generate-image-manifest.mjs",
-    "prestart": "node scripts/generate-image-manifest.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
