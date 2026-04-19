@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Users,
   Mail,
+  Menu,
 } from "lucide-react";
 import "@/styles/Admin.css";
 
@@ -56,6 +57,7 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
   const [userName, setUserName] = useState("Admin");
   const [userRole, setUserRole] = useState("管理员");
   const [currentRole, setCurrentRole] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -97,8 +99,14 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
       <div className="admin-orb admin-orb-1" aria-hidden="true" />
       <div className="admin-orb admin-orb-2" aria-hidden="true" />
 
+      {/* ── Sidebar backdrop (mobile) ── */}
+      <div
+        className={`admin-sidebar-backdrop${sidebarOpen ? " visible" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       {/* ── Sidebar ── */}
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar${sidebarOpen ? " open" : ""}`}>
         {/* Brand */}
         <div className="admin-brand">
           <Heart className="admin-brand-icon" size={18} fill="currentColor" strokeWidth={0} />
@@ -121,7 +129,7 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
             <button
               key={item.href}
               className={`admin-nav-item${pathname === item.href ? " active" : ""}`}
-              onClick={() => router.push(item.href)}
+              onClick={() => { router.push(item.href); setSidebarOpen(false); }}
             >
               {item.icon}
               <span>{item.label}</span>
@@ -150,6 +158,11 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
       {/* ── Main ── */}
       <div className="admin-main">
         <header className="admin-header">
+          {/* Hamburger (mobile only) */}
+          <button className="admin-hamburger" onClick={() => setSidebarOpen(true)} aria-label="打开菜单">
+            <Menu size={18} strokeWidth={1.8} />
+          </button>
+
           {/* 面包屑 */}
           <nav className="admin-breadcrumb" aria-label="面包屑" style={{ flex: 1 }}>
             {breadcrumbs.map((crumb, i) => (

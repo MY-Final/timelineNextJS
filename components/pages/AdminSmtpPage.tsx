@@ -8,6 +8,7 @@ import {
   Send, TestTube, FileText, Eye, Pencil, RotateCcw, RefreshCw,
 } from "lucide-react";
 import ConfirmDialog, { type ConfirmDialogProps } from "@/components/ui/common/ConfirmDialog";
+import CollapsibleFilter from "@/components/ui/common/CollapsibleFilter";
 
 interface EmailAccount {
   id: number;
@@ -583,25 +584,27 @@ export default function AdminSmtpPage() {
       {/* ── 顶部操作栏 ── */}
       <div className="admin-toolbar">
         <div className="admin-filter-group">
-          <div style={{ position: "relative" }}>
-            <input
-              className="admin-filter-select"
-              style={{ paddingLeft: 10, width: 200 }}
-              placeholder="搜索名称/邮箱"
-              value={filters.q}
-              onChange={e => handleFilterChange("q", e.target.value)}
-            />
-          </div>
-          <select className="admin-filter-select" value={filters.is_active} onChange={e => handleFilterChange("is_active", e.target.value)}>
-            <option value="">全部状态</option>
-            <option value="true">已启用</option>
-            <option value="false">已停用</option>
-          </select>
-          {isDirty && (
+          <CollapsibleFilter activeCount={Object.values(filters).filter(v => v !== "").length}>
+            <div style={{ position: "relative", flex: "1 1 180px", minWidth: 140 }}>
+              <input
+                className="admin-form-input"
+                style={{ margin: 0 }}
+                placeholder="搜索名称/邮箱"
+                value={filters.q}
+                onChange={e => handleFilterChange("q", e.target.value)}
+              />
+            </div>
+            <select className="admin-filter-select" value={filters.is_active} onChange={e => handleFilterChange("is_active", e.target.value)}>
+              <option value="">全部状态</option>
+              <option value="true">已启用</option>
+              <option value="false">已停用</option>
+            </select>
+            {isDirty && (
             <button className="admin-action-btn admin-action-btn--ghost" onClick={() => { setFilters(EMPTY_FILTERS); setPage(1); }}>
               <X size={13} />重置
             </button>
           )}
+          </CollapsibleFilter>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button className="admin-btn admin-btn--ghost" onClick={() => setTestModal(true)}>
@@ -627,7 +630,7 @@ export default function AdminSmtpPage() {
       )}
 
       {/* 表格 */}
-      <div className="admin-panel" style={{ padding: 0, overflow: "hidden" }}>
+      <div className="admin-panel admin-panel--table">
         <table className="admin-table">
           <thead>
             <tr>
@@ -654,32 +657,32 @@ export default function AdminSmtpPage() {
               </td></tr>
             ) : list.map(acc => (
               <tr key={acc.id} className={`admin-table-row${selectedIds.has(acc.id) ? " admin-table-row--selected" : ""}`}>
-                <td style={{ textAlign: "center" }}>
+                <td data-card-check style={{ textAlign: "center" }}>
                   <button className="admin-check-btn" onClick={() => toggleSelect(acc.id)}>
                     {selectedIds.has(acc.id) ? <CheckSquare size={14} strokeWidth={1.8} /> : <Square size={14} strokeWidth={1.8} />}
                   </button>
                 </td>
-                <td>
+                <td data-card-title>
                   <div style={{ fontWeight: 500, fontSize: 13.5 }}>{acc.name}</div>
                   <div style={{ fontSize: 11.5, color: "var(--muted-deep)" }}>{acc.user_addr}</div>
                   {acc.from_name && <div style={{ fontSize: 11, color: "var(--muted)" }}>发件人：{acc.from_name}</div>}
                 </td>
-                <td style={{ fontSize: 12.5, color: "var(--muted-deep)" }}>
+                <td data-card-status>
+                  <span className={`admin-status-tag ${acc.is_active ? "admin-status-tag--published" : "admin-status-tag--draft"}`}>
+                    {acc.is_active ? "启用" : "停用"}
+                  </span>
+                </td>
+                <td data-label="配置" style={{ fontSize: 12.5, color: "var(--muted-deep)" }}>
                   {acc.host}:{acc.port} <span style={{ fontSize: 11 }}>({acc.secure ? "SSL" : "TLS"})</span>
                 </td>
-                <td>
+                <td data-label="用途">
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {acc.use_for_reg && <span className="admin-status-tag admin-status-tag--published">注册验证</span>}
                     {acc.use_for_pwd && <span className="admin-status-tag admin-status-tag--public">找回密码</span>}
                     {!acc.use_for_reg && !acc.use_for_pwd && <span style={{ color: "var(--muted)", fontSize: 12 }}>未指定</span>}
                   </div>
                 </td>
-                <td>
-                  <span className={`admin-status-tag ${acc.is_active ? "admin-status-tag--published" : "admin-status-tag--draft"}`}>
-                    {acc.is_active ? "启用" : "停用"}
-                  </span>
-                </td>
-                <td>
+                <td data-label="操作">
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="admin-action-btn" title="编辑" onClick={() => setFormModal({ mode: "edit", account: acc })}>
                       <Edit3 size={13} strokeWidth={1.8} />

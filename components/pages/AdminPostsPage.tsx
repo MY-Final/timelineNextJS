@@ -11,6 +11,7 @@ import ConfirmDialog, { type ConfirmDialogProps } from "@/components/ui/common/C
 import PostDetailModal from "@/components/ui/common/PostDetailModal";
 import AdminNewPostModal from "@/components/ui/common/AdminNewPostModal";
 import PostFilterBar, { type PostFilters, EMPTY_FILTERS } from "@/components/ui/common/PostFilterBar";
+import CollapsibleFilter from "@/components/ui/common/CollapsibleFilter";
 import dynamic from "next/dynamic";
 
 const EditPostModal = dynamic(() => import("@/components/ui/common/EditPostModal"), { ssr: false });
@@ -262,7 +263,9 @@ export default function AdminPostsPage() {
           </button>
         </div>
 
-        <PostFilterBar filters={filters} onChange={handleFilterChange} />
+        <CollapsibleFilter activeCount={Object.values(filters).filter(v => v !== "").length}>
+          <PostFilterBar filters={filters} onChange={handleFilterChange} />
+        </CollapsibleFilter>
 
         <BatchToolbar
           selectedIds={[...selectedIds]}
@@ -316,30 +319,30 @@ export default function AdminPostsPage() {
                   className={`admin-table-row--clickable${selectedIds.has(post.id) ? " admin-table-row--selected" : ""}`}
                   onClick={() => setDetailId(post.id)}
                 >
-                  <td onClick={(e) => e.stopPropagation()}>
+                  <td data-card-check onClick={(e) => e.stopPropagation()}>
                     <button className="admin-check-btn" onClick={() => toggleSelect(post.id)}>
                       {selectedIds.has(post.id)
                         ? <CheckSquare size={15} strokeWidth={1.8} style={{ color: "#e11d48" }} />
                         : <Square size={15} strokeWidth={1.8} />}
                     </button>
                   </td>
-                  <td>#{post.id}</td>
-                  <td>{post.title || <span style={{ opacity: 0.4 }}>（无标题）</span>}</td>
-                  <td>{post.author_nickname || post.author_username}</td>
-                  <td>{post.image_count}</td>
-                  <td>
+                  <td data-card-id>#{post.id}</td>
+                  <td data-card-title>{post.title || <span style={{ opacity: 0.4 }}>（无标题）</span>}</td>
+                  <td data-label="作者">{post.author_nickname || post.author_username}</td>
+                  <td data-label="图片">{post.image_count}</td>
+                  <td data-card-status>
                     <span className={`admin-badge admin-badge--${post.status}`}>
                       {post.status === "published" ? "已发布" : "草稿"}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="可见性">
                     <span className={`admin-badge ${post.is_public ? "admin-badge--published" : "admin-badge--draft"}`}>
                       {post.is_public ? "公开" : "隐藏"}
                     </span>
                   </td>
-                  <td>{formatDate(post.created_at)}</td>
-                  <td>{formatDate(post.event_date)}</td>
-                  <td onClick={(e) => e.stopPropagation()}>
+                  <td data-label="创建">{formatDate(post.created_at)}</td>
+                  <td data-label="日期">{formatDate(post.event_date)}</td>
+                  <td data-label="操作" onClick={(e) => e.stopPropagation()}>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button className="admin-action-btn" title="编辑" disabled={loadingId === post.id} onClick={(e) => { e.stopPropagation(); setEditId(post.id); }}>
                         <Edit3 size={13} strokeWidth={1.8} />

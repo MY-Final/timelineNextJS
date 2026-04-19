@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "@/components/pages/AdminLayout";
 import ConfirmDialog, { ConfirmDialogProps } from "@/components/ui/common/ConfirmDialog";
 import { MessageSquare, Search, Trash2, EyeOff, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import CollapsibleFilter from "@/components/ui/common/CollapsibleFilter";
 
 interface CommentRow {
   id: number;
@@ -114,30 +115,32 @@ export default function AdminCommentsPage() {
           </h2>
 
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <select
-              value={statusFilter}
-              onChange={e => handleStatusFilterChange(e.target.value)}
-              className="admin-input"
-              style={{ height: 32, padding: "0 8px", fontSize: 13, minWidth: 100 }}
-            >
-              <option value="">全部状态</option>
-              <option value="visible">显示</option>
-              <option value="hidden">已隐藏</option>
-            </select>
+            <CollapsibleFilter activeCount={(statusFilter ? 1 : 0) + (keyword ? 1 : 0)}>
+              <select
+                value={statusFilter}
+                onChange={e => handleStatusFilterChange(e.target.value)}
+                className="admin-filter-select"
+                style={{ minWidth: 100 }}
+              >
+                <option value="">全部状态</option>
+                <option value="visible">显示</option>
+                <option value="hidden">已隐藏</option>
+              </select>
 
-            <form onSubmit={handleSearch} style={{ display: "flex", gap: 6 }}>
-              <input
-                className="admin-input"
-                style={{ height: 32, padding: "0 10px", fontSize: 13, width: 180 }}
-                placeholder="搜索内容/用户名…"
-                value={inputKeyword}
-                onChange={e => setInputKeyword(e.target.value)}
-              />
-              <button type="submit" className="admin-action-btn admin-action-btn--primary" style={{ height: 32, padding: "0 12px", gap: 4 }}>
-                <Search size={13} />
-                搜索
-              </button>
-            </form>
+              <form onSubmit={handleSearch} style={{ display: "flex", gap: 6, flex: "1 1 auto", minWidth: 0 }}>
+                <input
+                  className="admin-form-input"
+                  style={{ margin: 0, flex: "1 1 120px", minWidth: 0 }}
+                  placeholder="搜索内容/用户名…"
+                  value={inputKeyword}
+                  onChange={e => setInputKeyword(e.target.value)}
+                />
+                <button type="submit" className="admin-action-btn admin-action-btn--primary" style={{ padding: "0 12px", gap: 4, flexShrink: 0 }}>
+                  <Search size={13} />
+                  搜索
+                </button>
+              </form>
+            </CollapsibleFilter>
           </div>
         </div>
 
@@ -165,7 +168,7 @@ export default function AdminCommentsPage() {
             <tbody>
               {comments.map(c => (
                 <tr key={c.id}>
-                  <td style={{ color: "var(--text-muted)", fontSize: 12 }}>
+                  <td data-card-id style={{ color: "var(--text-muted)", fontSize: 12 }}>
                     #{c.id}
                     {c.parent_id && (
                       <span style={{ marginLeft: 4, fontSize: 10, color: "var(--text-muted)", background: "rgba(0,0,0,0.05)", borderRadius: 4, padding: "1px 4px" }}>
@@ -173,28 +176,28 @@ export default function AdminCommentsPage() {
                       </span>
                     )}
                   </td>
-                  <td style={{ maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13 }}>
+                  <td data-card-title style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13 }}>
                     {c.post_title}
                   </td>
-                  <td style={{ fontSize: 13 }}>
+                  <td data-label="评论者" style={{ fontSize: 13 }}>
                     <div>{c.nickname || c.username}</div>
                     {c.nickname && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>@{c.username}</div>}
                   </td>
-                  <td style={{ maxWidth: 220 }}>
+                  <td data-label="内容">
                     <div style={{ fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: c.status === "hidden" ? "var(--text-muted)" : undefined }}>
                       {c.status === "hidden" && <EyeOff size={11} style={{ marginRight: 4, verticalAlign: "middle", opacity: 0.5 }} />}
                       {c.content}
                     </div>
                   </td>
-                  <td style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                  <td data-label="时间" style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                     {formatDate(c.created_at)}
                   </td>
-                  <td>
+                  <td data-card-status>
                     <span className={`admin-badge ${c.status === "visible" ? "admin-badge--published" : "admin-badge--draft"}`}>
                       {c.status === "visible" ? "显示" : "隐藏"}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="操作">
                     <div style={{ display: "flex", gap: 6 }}>
                       <button
                         className="admin-action-btn"

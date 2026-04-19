@@ -14,6 +14,7 @@
   box-shadow: var(--shadow-panel);
 }
 .admin-panel { padding: 24px; }
+.admin-panel--table { padding: 0; overflow: hidden; }
 .admin-stat-card { padding: 18px 20px; }
 
 .admin-panel-title {
@@ -451,23 +452,184 @@
   .admin-stat-value { font-size: 22px; }
 
   /* Panel padding */
-  .admin-panel { padding: 14px 12px; }
+  .admin-panel { padding: 14px 12px; overflow-x: visible; }
+  .admin-panel--table { padding: 10px; overflow: visible; }
 
-  /* Table horizontal scroll */
-  .admin-panel.admin-panel--table { padding: 0; }
-  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .admin-panel { overflow-x: auto; }
-  .admin-table { min-width: 560px; }
-  .admin-table th, .admin-table td { padding: 10px 10px; font-size: 12px; }
+  /* ═══════════════════════════════════════════════════
+     Glass List Item — Table → Vertical Card on Mobile
+     ═══════════════════════════════════════════════════ */
+  .admin-table { min-width: 0; }
+  .admin-table thead { display: none; }
+  .admin-table tbody { display: flex; flex-direction: column; gap: 12px; }
 
-  /* Toolbar stack vertically */
+  /* ── Card container ── */
+  .admin-table tr {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-soft);
+    background: var(--surface-card);
+    backdrop-filter: var(--blur-sm);
+    -webkit-backdrop-filter: var(--blur-sm);
+    box-shadow: 0 2px 12px rgba(180, 60, 90, 0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .admin-table tr:hover td { background: transparent; }
+
+  /* ── Base cell reset ── */
+  .admin-table td {
+    padding: 0;
+    border-bottom: none;
+    font-size: 13px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+  .admin-table td::before {
+    content: none; /* disable by default, enabled per-role */
+  }
+
+  /* ── Card header: [data-card-title] ── */
+  .admin-table td[data-card-title] {
+    padding: 14px 16px 6px;
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--text-heading);
+    padding-right: 90px; /* room for status badge */
+  }
+  .admin-table td[data-card-title]::before { content: none; }
+
+  /* ── Status badge: [data-card-status] ── */
+  .admin-table td[data-card-status] {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    padding: 0;
+  }
+  .admin-table td[data-card-status]::before { content: none; }
+
+  /* ── Checkbox cell: [data-card-check] ── */
+  .admin-table td[data-card-check] {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    padding: 0;
+    z-index: 2;
+  }
+  .admin-table td[data-card-check]::before { content: none; }
+  /* When both check & status exist, push status left */
+  .admin-table td[data-card-check] ~ td[data-card-status] {
+    right: auto;
+    left: auto;
+    position: static;
+    padding: 0 16px 4px;
+  }
+
+  /* ── Detail cells: [data-label] ── */
+  .admin-table td[data-label] {
+    padding: 4px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .admin-table td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    min-width: 52px;
+    flex-shrink: 0;
+  }
+
+  /* ── ID cell (subtle) ── */
+  .admin-table td[data-card-id] {
+    padding: 4px 16px 0;
+    font-size: 11px;
+    color: var(--text-muted);
+    order: -2;
+    padding-top: 12px;
+  }
+  .admin-table td[data-card-id]::before { content: none; }
+
+  /* ── Actions cell: full-width bottom bar ── */
+  .admin-table td[data-label="操作"] {
+    order: 99;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border-soft);
+    margin-top: 8px;
+    background: rgba(255, 245, 248, 0.5);
+  }
+  .admin-table td[data-label="操作"]::before { content: none; }
+  .admin-table td[data-label="操作"] > div {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .admin-table td[data-label="操作"] .admin-action-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  /* ── Hidden cells (like raw ID when card-id exists) ── */
+  .admin-table td[data-card-hidden] {
+    display: none;
+  }
+  /* ═══════════════════════════════════════════════════
+     Toolbar / Filter — Stack & Collapse
+     ═══════════════════════════════════════════════════ */
   .admin-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
-  .admin-toolbar > div { width: 100%; justify-content: flex-end; }
-  .admin-filter-group { width: 100%; }
-  .admin-filter-select { flex: 1; min-width: 0; }
+  .admin-toolbar > div { width: 100%; }
+  .admin-filter-group { width: 100%; flex-wrap: wrap; }
+  .admin-filter-select { flex: 1; min-width: 0; font-size: 12px; padding: 6px 8px; }
+
+  /* Collapsible filter */
+  .admin-filter-collapsible {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .admin-filter-collapsible.open {
+    display: flex;
+  }
+  .admin-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-input);
+    background: var(--surface-input);
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast);
+    width: 100%;
+    justify-content: center;
+  }
+  .admin-filter-toggle:hover { background: rgba(212, 92, 128, 0.06); border-color: var(--pk-400); }
+  .admin-filter-toggle .badge {
+    background: var(--pk-500);
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
 
   /* Batch bar wraps */
   .admin-batch-bar { gap: 6px; }
@@ -475,7 +637,6 @@
 
   /* Buttons compact on mobile */
   .admin-btn { padding: 6px 12px; font-size: 12.5px; }
-  .admin-action-btn { padding: 5px 9px; font-size: 11.5px; }
 
   /* Pagination compact */
   .admin-pagination { flex-wrap: wrap; gap: 6px; }
@@ -489,11 +650,21 @@
     max-height: 92svh;
   }
 
-  /* Breadcrumb show on mobile again */
-  .admin-breadcrumb { display: flex !important; }
-  .admin-breadcrumb-current { font-size: 13px; }
-  .admin-breadcrumb-link { display: none; }
-
   /* Inputs full width in filter */
   .admin-input { width: 100%; box-sizing: border-box; }
+
+  /* Filter date inputs narrower */
+  .admin-filter-date { width: auto; flex: 1; min-width: 0; font-size: 12px; padding: 6px 6px; }
+
+  /* Filter bar */
+  .admin-filter-bar { flex-direction: column; gap: 8px; }
+  .admin-filter-bar > div { width: 100%; flex: 1 1 100% !important; }
+  .admin-filter-bar > select { width: 100%; }
+  .admin-filter-bar .admin-filter-date { flex: 1; }
+}
+
+/* ── Desktop: always show collapsible, hide toggle ── */
+@media (min-width: 769px) {
+  .admin-filter-toggle { display: none; }
+  .admin-filter-collapsible { display: flex !important; flex-wrap: wrap; gap: 8px; align-items: center; }
 }

@@ -8,6 +8,7 @@ import {
   ShieldCheck, ShieldOff, Search, X, Edit3,
 } from "lucide-react";
 import ConfirmDialog, { type ConfirmDialogProps } from "@/components/ui/common/ConfirmDialog";
+import CollapsibleFilter from "@/components/ui/common/CollapsibleFilter";
 
 // ── 类型 ──────────────────────────────────────────────
 interface User {
@@ -350,32 +351,34 @@ export default function AdminUsersPage() {
       <div className="admin-toolbar">
         {/* 搜索 */}
         <div className="admin-filter-group">
-          <div style={{ position: "relative" }}>
-            <Search size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--muted-deep)", pointerEvents: "none" }} />
-            <input
-              className="admin-filter-select"
-              style={{ paddingLeft: 28, width: 200 }}
-              placeholder="搜索账号/昵称/邮箱"
-              value={filters.q}
-              onChange={e => handleFilterChange("q", e.target.value)}
-            />
-          </div>
-          <select className="admin-filter-select" value={filters.role} onChange={e => handleFilterChange("role", e.target.value)}>
-            <option value="">全部角色</option>
-            <option value="superadmin">超级管理员</option>
-            <option value="admin">管理员</option>
-            <option value="user">普通用户</option>
-          </select>
-          <select className="admin-filter-select" value={filters.is_active} onChange={e => handleFilterChange("is_active", e.target.value)}>
-            <option value="">全部状态</option>
-            <option value="true">已启用</option>
-            <option value="false">已禁用</option>
-          </select>
-          {isDirty && (
-            <button className="admin-action-btn admin-action-btn--ghost" onClick={() => { setFilters(EMPTY_FILTERS); setPage(1); }}>
-              <X size={13} />重置
-            </button>
-          )}
+          <CollapsibleFilter activeCount={Object.values(filters).filter(v => v !== "").length}>
+            <div style={{ position: "relative", flex: "1 1 180px", minWidth: 140 }}>
+              <Search size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--muted-deep)", pointerEvents: "none" }} />
+              <input
+                className="admin-form-input"
+                style={{ paddingLeft: 28, margin: 0 }}
+                placeholder="搜索账号/昵称/邮箱"
+                value={filters.q}
+                onChange={e => handleFilterChange("q", e.target.value)}
+              />
+            </div>
+            <select className="admin-filter-select" value={filters.role} onChange={e => handleFilterChange("role", e.target.value)}>
+              <option value="">全部角色</option>
+              <option value="superadmin">超级管理员</option>
+              <option value="admin">管理员</option>
+              <option value="user">普通用户</option>
+            </select>
+            <select className="admin-filter-select" value={filters.is_active} onChange={e => handleFilterChange("is_active", e.target.value)}>
+              <option value="">全部状态</option>
+              <option value="true">已启用</option>
+              <option value="false">已禁用</option>
+            </select>
+            {isDirty && (
+              <button className="admin-action-btn admin-action-btn--ghost" onClick={() => { setFilters(EMPTY_FILTERS); setPage(1); }}>
+                <X size={13} />重置
+              </button>
+            )}
+          </CollapsibleFilter>
         </div>
         <button className="admin-btn admin-btn--primary" onClick={() => setFormModal({ mode: "new" })}>
           <Plus size={14} strokeWidth={1.8} />新建用户
@@ -391,7 +394,7 @@ export default function AdminUsersPage() {
       />
 
       {/* ── 表格 ── */}
-      <div className="admin-panel" style={{ padding: 0, overflow: "hidden" }}>
+      <div className="admin-panel admin-panel--table">
         <table className="admin-table">
           <thead>
             <tr>
@@ -419,32 +422,32 @@ export default function AdminUsersPage() {
               </td></tr>
             ) : list.map(user => (
               <tr key={user.id} className={`admin-table-row${selectedIds.has(user.id) ? " admin-table-row--selected" : ""}`}>
-                <td style={{ textAlign: "center" }}>
+                <td data-card-check style={{ textAlign: "center" }}>
                   <button className="admin-check-btn" onClick={() => toggleSelect(user.id)}>
                     {selectedIds.has(user.id)
                       ? <CheckSquare size={14} strokeWidth={1.8} />
                       : <Square size={14} strokeWidth={1.8} />}
                   </button>
                 </td>
-                <td>
+                <td data-card-title>
                   <div style={{ fontWeight: 500, fontSize: 13.5 }}>{user.nickname || user.username}</div>
                   <div style={{ fontSize: 11.5, color: "var(--muted-deep)" }}>@{user.username}</div>
                 </td>
-                <td style={{ fontSize: 12.5, color: "var(--muted-deep)" }}>{user.email ?? "—"}</td>
-                <td>
-                  <span className={`admin-status-tag ${user.role === "superadmin" ? "admin-status-tag--superadmin" : user.role === "admin" ? "admin-status-tag--admin" : "admin-status-tag--user"}`}>
-                    {ROLE_LABELS[user.role] ?? user.role}
-                  </span>
-                </td>
-                <td>
+                <td data-card-status>
                   <span className={`admin-status-tag ${user.is_active ? "admin-status-tag--published" : "admin-status-tag--draft"}`}>
                     {user.is_active ? "启用" : "禁用"}
                   </span>
                 </td>
-                <td style={{ fontSize: 12, color: "var(--muted-deep)" }}>
+                <td data-label="邮箱" style={{ fontSize: 12.5, color: "var(--muted-deep)" }}>{user.email ?? "—"}</td>
+                <td data-label="角色">
+                  <span className={`admin-status-tag ${user.role === "superadmin" ? "admin-status-tag--superadmin" : user.role === "admin" ? "admin-status-tag--admin" : "admin-status-tag--user"}`}>
+                    {ROLE_LABELS[user.role] ?? user.role}
+                  </span>
+                </td>
+                <td data-label="注册" style={{ fontSize: 12, color: "var(--muted-deep)" }}>
                   {new Date(user.created_at).toLocaleDateString("zh-CN")}
                 </td>
-                <td>
+                <td data-label="操作">
                   <div style={{ display: "flex", gap: 6 }}>
                     <button className="admin-action-btn" title="编辑" onClick={() => setFormModal({ mode: "edit", user })}>
                       <Edit3 size={13} strokeWidth={1.8} />

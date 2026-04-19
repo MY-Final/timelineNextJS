@@ -37,7 +37,7 @@ export default function PostFilterBar({ filters, onChange }: Props) {
   const dirty = isDirty(filters);
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
+    <div className="admin-filter-bar" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
       {/* 关键词搜索 */}
       <div style={{ position: "relative", flex: "1 1 180px", minWidth: 140 }}>
         <Search size={13} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "#c0a0b0", pointerEvents: "none" }} />
