@@ -17,10 +17,6 @@
 /.next/
 /out/
 
-# serwist / PWA generated files
-/public/sw.js
-/public/swe-worker-*.js
-
 # production
 /build
 
