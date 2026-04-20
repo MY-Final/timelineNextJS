@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
   if (DB_TYPE === 'supabase') {
     const supabase = getSupabaseClient();
     let query = supabase.from('email_accounts')
-      .select('id,name,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,created_at,updated_at', { count: 'exact' });
+      .select('id,name,provider,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,created_at,updated_at', { count: 'exact' });
     if (q) query = query.or(`name.ilike.%${q}%,user_addr.ilike.%${q}%`);
     if (isActive !== '') query = query.eq('is_active', isActive === 'true');
     query = query.order('id', { ascending: false }).range(offset, offset + limit - 1);
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
     const total = parseInt(countRes.rows[0].count);
     const listRes = await client.query(
       // 不返回密码字段
-      `SELECT id, name, host, port, secure, user_addr, from_name, is_active, use_for_reg, use_for_pwd, created_at, updated_at
+      `SELECT id, name, provider, host, port, secure, user_addr, from_name, is_active, use_for_reg, use_for_pwd, created_at, updated_at
        FROM email_accounts ${where} ORDER BY id DESC LIMIT $${pi} OFFSET $${pi + 1}`,
       [...params, limit, offset]
     );
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
   if (auth.role !== 'superadmin') return errorResponse(ResultCode.FORBIDDEN, '仅超级管理员可管理邮箱配置');
 
   let body: {
-    name?: string; host?: string; port?: number; secure?: boolean;
+    name?: string; provider?: string; host?: string; port?: number; secure?: boolean;
     user_addr?: string; password?: string; from_name?: string;
     is_active?: boolean; use_for_reg?: boolean; use_for_pwd?: boolean;
   };
@@ -129,20 +129,25 @@ export async function POST(request: NextRequest) {
     return errorResponse(ResultCode.BAD_REQUEST, '请求体格式错误');
   }
 
-  const { name, host, port, secure, user_addr, password, from_name, is_active, use_for_reg, use_for_pwd } = body;
-  if (!name || !host || !user_addr || !password) {
-    return errorResponse(ResultCode.BAD_REQUEST, '名称、服务器、邮箱地址、密码为必填');
+  const { name, provider, host, port, secure, user_addr, password, from_name, is_active, use_for_reg, use_for_pwd } = body;
+  const resolvedProvider = provider === 'resend' ? 'resend' : 'smtp';
+  if (!name || !user_addr || !password) {
+    return errorResponse(ResultCode.BAD_REQUEST, '名称、邮箱地址、密码/API Key 为必填');
   }
-  if (port !== undefined && (port < 1 || port > 65535)) {
-    return errorResponse(ResultCode.BAD_REQUEST, '端口号必须在 1-65535 之间');
+  if (resolvedProvider === 'smtp' && !host) {
+    return errorResponse(ResultCode.BAD_REQUEST, 'SMTP 模式下服务器地址为必填');
+  }
+  if (port !== undefined && (port < 0 || port > 65535)) {
+    return errorResponse(ResultCode.BAD_REQUEST, '端口号必须在 0-65535 之间');
   }
 
   if (DB_TYPE === 'supabase') {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.from('email_accounts').insert({
-      name, host, port: port ?? 465, secure: secure ?? true, user_addr, password,
+      name, provider: resolvedProvider, host: host ?? '', port: port ?? (resolvedProvider === 'resend' ? 0 : 465),
+      secure: secure ?? true, user_addr, password,
       from_name: from_name ?? '', is_active: is_active ?? true, use_for_reg: use_for_reg ?? false, use_for_pwd: use_for_pwd ?? false,
-    }).select('id,name,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,created_at').single();
+    }).select('id,name,provider,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,created_at').single();
     if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
     return successResponse(data, '创建成功');
   }
@@ -150,10 +155,10 @@ export async function POST(request: NextRequest) {
   const client = await pool.connect();
   try {
     const res = await client.query(
-      `INSERT INTO email_accounts (name, host, port, secure, user_addr, password, from_name, is_active, use_for_reg, use_for_pwd)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-       RETURNING id, name, host, port, secure, user_addr, from_name, is_active, use_for_reg, use_for_pwd, created_at`,
-      [name, host, port ?? 465, secure ?? true, user_addr, password, from_name ?? '', is_active ?? true, use_for_reg ?? false, use_for_pwd ?? false]
+      `INSERT INTO email_accounts (name, provider, host, port, secure, user_addr, password, from_name, is_active, use_for_reg, use_for_pwd)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING id, name, provider, host, port, secure, user_addr, from_name, is_active, use_for_reg, use_for_pwd, created_at`,
+      [name, resolvedProvider, host ?? '', port ?? (resolvedProvider === 'resend' ? 0 : 465), secure ?? true, user_addr, password, from_name ?? '', is_active ?? true, use_for_reg ?? false, use_for_pwd ?? false]
     );
     return successResponse(res.rows[0], '创建成功');
   } finally {

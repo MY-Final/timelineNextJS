@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
-import pool from "@/lib/db";
+import pool, { DB_TYPE } from "@/lib/db";
+import { getSupabaseClient } from "@/lib/supabase";
 import { errorResponse, successResponse, ResultCode } from "@/lib/result";
-import nodemailer from "nodemailer";
-import { defaultOtpHtml } from "@/lib/mailer";
+import { defaultOtpHtml, sendMail, type EmailAccount } from "@/lib/mailer";
 import { readFile } from "fs/promises";
 import path from "path";
 
@@ -37,13 +37,24 @@ export async function POST(request: NextRequest) {
   const { account_id, to, template_type } = await request.json();
   if (!account_id || !to) return errorResponse(ResultCode.BAD_REQUEST, "缺少参数");
 
-  const { rows } = await pool.query(
-    `SELECT * FROM email_accounts WHERE id = $1`,
-    [account_id]
-  );
-  if (rows.length === 0) return errorResponse(ResultCode.NOT_FOUND, "账号不存在");
-
-  const acc = rows[0];
+  let acc: Record<string, unknown> | null = null;
+  if (DB_TYPE === "supabase") {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("email_accounts")
+      .select("*")
+      .eq("id", account_id)
+      .maybeSingle();
+    if (error) return errorResponse(ResultCode.DB_ERROR, "数据库错误");
+    acc = data;
+  } else {
+    const { rows } = await pool.query(
+      `SELECT * FROM email_accounts WHERE id = $1`,
+      [account_id]
+    );
+    acc = rows[0] ?? null;
+  }
+  if (!acc) return errorResponse(ResultCode.NOT_FOUND, "账号不存在");
 
   // 决定邮件内容
   const type: "register" | "reset" = template_type === "reset" ? "reset" : "register";
@@ -64,20 +75,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const transport = nodemailer.createTransport({
-      host: acc.host,
-      port: acc.port,
-      secure: acc.secure,
-      auth: { user: acc.user_addr, pass: acc.password },
-    });
-
-    await transport.sendMail({
-      from: acc.from_name ? `"${acc.from_name}" <${acc.user_addr}>` : acc.user_addr,
-      to,
-      subject,
-      html,
-    });
-
+    await sendMail(acc as EmailAccount, to, subject, html);
     return successResponse({ message: "测试邮件发送成功" }, "发送成功");
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "发送失败";

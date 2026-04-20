@@ -13,6 +13,7 @@ import CollapsibleFilter from "@/components/ui/common/CollapsibleFilter";
 interface EmailAccount {
   id: number;
   name: string;
+  provider?: string; // 'smtp' | 'resend'
   host: string;
   port: number;
   secure: boolean;
@@ -39,6 +40,7 @@ function AccountFormModal({
 }) {
   const [form, setForm] = useState({
     name: initial?.name ?? "",
+    provider: (initial as EmailAccount & { provider?: string })?.provider ?? "smtp",
     host: initial?.host ?? "smtp.qq.com",
     port: String(initial?.port ?? 465),
     secure: initial?.secure ?? true,
@@ -63,11 +65,14 @@ function AccountFormModal({
     if (!isEdit && !form.password) { setError("密码/授权码为必填"); return; }
     setLoading(true);
     try {
-      const data: Record<string, unknown> = {
-        ...form,
-        port: parseInt(form.port),
-      };
+      const data: Record<string, unknown> = { ...form, port: parseInt(form.port) };
       if (!data.password) delete data.password;
+      // Resend 模式不需要 SMTP 字段
+      if (form.provider === "resend") {
+        data.host = "";
+        data.port = 0;
+        data.secure = false;
+      }
       await onSave(data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "操作失败");
@@ -89,29 +94,51 @@ function AccountFormModal({
             <input className="admin-input" value={form.name} onChange={e => set("name", e.target.value)} placeholder="如：主发件箱" required />
           </div>
           <div className="admin-form-row">
-            <label className="admin-form-label">SMTP 服务器 *</label>
-            <input className="admin-input" value={form.host} onChange={e => set("host", e.target.value)} placeholder="smtp.qq.com" required />
+            <label className="admin-form-label">发送方式 *</label>
+            <select className="admin-filter-select" value={form.provider} onChange={e => set("provider", e.target.value)}>
+              <option value="smtp">SMTP（QQ/163/自建等）</option>
+              <option value="resend">Resend</option>
+            </select>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div className="admin-form-row">
-              <label className="admin-form-label">端口 *</label>
-              <input className="admin-input" type="number" value={form.port} onChange={e => set("port", e.target.value)} placeholder="465" required />
-            </div>
-            <div className="admin-form-row">
-              <label className="admin-form-label">加密方式</label>
-              <select className="admin-filter-select" value={form.secure ? "ssl" : "tls"} onChange={e => set("secure", e.target.value === "ssl")}>
-                <option value="ssl">SSL/TLS（推荐）</option>
-                <option value="tls">STARTTLS</option>
-              </select>
-            </div>
-          </div>
+          {form.provider === "smtp" && (
+            <>
+              <div className="admin-form-row">
+                <label className="admin-form-label">SMTP 服务器 *</label>
+                <input className="admin-input" value={form.host} onChange={e => set("host", e.target.value)} placeholder="smtp.qq.com" required />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="admin-form-row">
+                  <label className="admin-form-label">端口 *</label>
+                  <input className="admin-input" type="number" value={form.port} onChange={e => set("port", e.target.value)} placeholder="465" required />
+                </div>
+                <div className="admin-form-row">
+                  <label className="admin-form-label">加密方式</label>
+                  <select className="admin-filter-select" value={form.secure ? "ssl" : "tls"} onChange={e => set("secure", e.target.value === "ssl")}>
+                    <option value="ssl">SSL/TLS（推荐）</option>
+                    <option value="tls">STARTTLS</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
           <div className="admin-form-row">
             <label className="admin-form-label">发件邮箱地址 *</label>
-            <input className="admin-input" type="email" value={form.user_addr} onChange={e => set("user_addr", e.target.value)} placeholder="xxx@qq.com" required />
+            <input className="admin-input" type="email" value={form.user_addr} onChange={e => set("user_addr", e.target.value)} placeholder={form.provider === "resend" ? "no-reply@yourdomain.com" : "xxx@qq.com"} required />
           </div>
           <div className="admin-form-row">
-            <label className="admin-form-label">{isEdit ? "授权码/密码（留空不改）" : "授权码/密码 *"}</label>
-            <input className="admin-input" type="password" value={form.password} onChange={e => set("password", e.target.value)} placeholder={isEdit ? "不修改请留空" : "QQ邮箱请填授权码"} />
+            <label className="admin-form-label">
+              {form.provider === "resend"
+                ? (isEdit ? "Resend API Key（留空不改）" : "Resend API Key *")
+                : (isEdit ? "授权码/密码（留空不改）" : "授权码/密码 *")
+              }
+            </label>
+            <input
+              className="admin-input"
+              type="password"
+              value={form.password}
+              onChange={e => set("password", e.target.value)}
+              placeholder={form.provider === "resend" ? "re_xxxxxxxxxxxx" : (isEdit ? "不修改请留空" : "QQ邮箱请填授权码")}
+            />
           </div>
           <div className="admin-form-row">
             <label className="admin-form-label">发件人名称</label>
@@ -673,7 +700,11 @@ export default function AdminSmtpPage() {
                   </span>
                 </td>
                 <td data-label="配置" style={{ fontSize: 12.5, color: "var(--muted-deep)" }}>
-                  {acc.host}:{acc.port} <span style={{ fontSize: 11 }}>({acc.secure ? "SSL" : "TLS"})</span>
+                  {(acc.provider ?? "smtp") === "resend" ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(99,102,241,0.1)", color: "#5145cd", borderRadius: 6, padding: "2px 8px", fontSize: 12, fontWeight: 500 }}>Resend</span>
+                  ) : (
+                    <span style={{ fontSize: 12.5, color: "var(--muted-deep)" }}>{acc.host}:{acc.port} <span style={{ fontSize: 11 }}>({acc.secure ? "SSL" : "TLS"})</span></span>
+                  )}
                 </td>
                 <td data-label="用途">
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>

@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return errorResponse(ResultCode.BAD_REQUEST, '请求体格式错误');
   }
 
-  const allowed = ['name', 'host', 'port', 'secure', 'user_addr', 'password', 'from_name', 'is_active', 'use_for_reg', 'use_for_pwd'];
+  const allowed = ['name', 'provider', 'host', 'port', 'secure', 'user_addr', 'password', 'from_name', 'is_active', 'use_for_reg', 'use_for_pwd'];
   const sets: string[] = [];
   const vals: unknown[] = [];
   let pi = 1;
@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     for (const key of allowed) { if (key in body) updates[key] = body[key]; }
     updates.updated_at = new Date().toISOString();
     const { data, error } = await supabase.from('email_accounts').update(updates).eq('id', id)
-      .select('id,name,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,updated_at').maybeSingle();
+      .select('id,name,provider,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,updated_at').maybeSingle();
     if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
     if (!data) return errorResponse(ResultCode.NOT_FOUND, '邮箱账号不存在');
     return successResponse(data, '更新成功');
@@ -98,7 +98,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const res = await client.query(
       `UPDATE email_accounts SET ${sets.join(', ')} WHERE id = $${pi}
-       RETURNING id, name, host, port, secure, user_addr, from_name, is_active, use_for_reg, use_for_pwd, updated_at`,
+       RETURNING id, name, provider, host, port, secure, user_addr, from_name, is_active, use_for_reg, use_for_pwd, updated_at`,
       vals
     );
     if (!res.rows[0]) return errorResponse(ResultCode.NOT_FOUND, '邮箱账号不存在');

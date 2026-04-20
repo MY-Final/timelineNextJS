@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import pool from './db';
@@ -6,6 +7,7 @@ import pool from './db';
 export interface EmailAccount {
   id: number;
   name: string;
+  provider?: string; // 'smtp' | 'resend'，默认 'smtp'
   host: string;
   port: number;
   secure: boolean;
@@ -77,6 +79,19 @@ export async function sendMail(
   subject: string,
   html: string
 ): Promise<void> {
+  const provider = account.provider ?? 'smtp';
+
+  if (provider === 'resend') {
+    const resend = new Resend(account.password);
+    const from = account.from_name
+      ? `${account.from_name} <${account.user_addr}>`
+      : account.user_addr;
+    const { error } = await resend.emails.send({ from, to, subject, html });
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  // SMTP（默认）
   const transporter = nodemailer.createTransport({
     host: account.host,
     port: account.port,
