@@ -119,6 +119,9 @@ export async function POST(request: NextRequest) {
   if (!name || !host || !user_addr || !password) {
     return errorResponse(ResultCode.BAD_REQUEST, '名称、服务器、邮箱地址、密码为必填');
   }
+  if (port !== undefined && (port < 1 || port > 65535)) {
+    return errorResponse(ResultCode.BAD_REQUEST, '端口号必须在 1-65535 之间');
+  }
 
   const client = await pool.connect();
   try {

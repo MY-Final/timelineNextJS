@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest) {
       return errorResponse(ResultCode.UNAUTHORIZED, '原密码错误');
     }
 
-    const hashed = await bcrypt.hash(newPassword, 10);
+    const hashed = await bcrypt.hash(newPassword, 12);
     await client.query(
       'UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2',
       [hashed, user.userId]

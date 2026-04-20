@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
       await (redis as Redis).set(rateLimitKey, '1', 'EX', 60);
     }
   } catch {
-    // Redis 不可用时跳过限流（降级处理）
+    // Redis 不可用时拒绝发送，避免限流被绕过
+    return errorResponse(ResultCode.INTERNAL_ERROR, '服务暂时不可用，请稍后再试');
   }
 
   const code = generateOtpCode();

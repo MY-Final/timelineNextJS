@@ -221,6 +221,9 @@ export async function POST(request: NextRequest) {
   }
 
   const title = (body.title ?? '').trim();
+  if (title.length > 200) {
+    return errorResponse(ResultCode.BAD_REQUEST, '标题不能超过 200 字');
+  }
   const tags = Array.isArray(body.tags) ? body.tags.filter(Boolean) : [];
   const is_public = body.is_public !== false;
   const status = body.status === 'draft' ? 'draft' : 'published';

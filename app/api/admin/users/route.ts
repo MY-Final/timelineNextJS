@@ -143,6 +143,9 @@ export async function POST(request: NextRequest) {
   if (password.length < 6) {
     return errorResponse(ResultCode.BAD_REQUEST, '密码长度不能少于 6 位');
   }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return errorResponse(ResultCode.BAD_REQUEST, '邮箱格式不正确');
+  }
 
   // admin 只能创建 user 角色
   const targetRole = role ?? 'user';
