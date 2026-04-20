@@ -33,6 +33,21 @@ export function createDbPool(): Pool {
   }
 }
 
-// 直接创建并导出 pool 实例
-const pool = createDbPool();
+// 懒加载：首次调用时创建 pool，避免模块加载时崩溃导致空响应
+let _pool: Pool | null = null;
+
+function getPool(): Pool {
+  if (!_pool) {
+    _pool = createDbPool();
+  }
+  return _pool;
+}
+
+// 代理对象：透明转发所有调用到懒加载的 pool
+const pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    return (getPool() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
+
 export default pool;
