@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await sendMail(acc as EmailAccount, to, subject, html);
+    await sendMail(acc as unknown as EmailAccount, to, subject, html);
     return successResponse({ message: "测试邮件发送成功" }, "发送成功");
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "发送失败";
