@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Noto_Serif_SC, Zhi_Mang_Xing } from "next/font/google";
 import "./globals.css";
 import SiteTopNav from "@/components/ui/common/SiteTopNav";
@@ -23,6 +23,19 @@ const handwrittenCn = Zhi_Mang_Xing({
 export const metadata: Metadata = {
   title: "Our Story",
   description: "A timeline of memories built with Next.js.",
+  applicationName: "Our Story",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Our Story",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
