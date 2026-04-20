@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
+import Redis from 'ioredis';
+import { Redis as UpstashRedis } from '@upstash/redis';
 import pool from '@/lib/db';
-import { generateOtpCode, setOtp } from '@/lib/redis';
+import { generateOtpCode, setOtp, REDIS_TYPE } from '@/lib/redis';
 import { sendOtpMail } from '@/lib/mailer';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 import { getRedis } from '@/lib/redis';
@@ -73,7 +75,11 @@ export async function POST(request: NextRequest) {
     if (exists) {
       return errorResponse(ResultCode.BAD_REQUEST, '发送过于频繁，请 60 秒后再试');
     }
-    await redis.set(rateLimitKey, '1', 'EX', 60);
+    if (REDIS_TYPE === 'upstash') {
+      await (redis as UpstashRedis).set(rateLimitKey, '1', { ex: 60 });
+    } else {
+      await (redis as Redis).set(rateLimitKey, '1', 'EX', 60);
+    }
   } catch {
     // Redis 不可用时跳过限流（降级处理）
   }
