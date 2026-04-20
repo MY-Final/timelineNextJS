@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { signToken } from '@/lib/jwt';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 import { TOKEN_COOKIE } from '@/lib/auth';
@@ -42,53 +43,61 @@ export async function POST(request: NextRequest) {
     return errorResponse(ResultCode.BAD_REQUEST, '账号和密码不能为空');
   }
 
-  const client = await pool.connect();
-  try {
-    const result = await client.query(
-      'SELECT id, username, password, nickname, role, is_active FROM users WHERE username = $1',
-      [username]
-    );
+  let user: { id: number; username: string; password: string; nickname: string; role: string; is_active: boolean } | null = null;
 
-    const user = result.rows[0];
-    if (!user) {
-      return errorResponse(ResultCode.UNAUTHORIZED, '账号或密码错误');
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.from('users')
+      .select('id,username,password,nickname,role,is_active')
+      .eq('username', username).maybeSingle();
+    user = data;
+  } else {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT id, username, password, nickname, role, is_active FROM users WHERE username = $1',
+        [username]
+      );
+      user = result.rows[0] ?? null;
+    } finally {
+      client.release();
     }
-    if (!user.is_active) {
-      return errorResponse(ResultCode.FORBIDDEN, '账号已被禁用');
-    }
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      return errorResponse(ResultCode.UNAUTHORIZED, '账号或密码错误');
-    }
-
-    await client.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
-
-    const token = signToken({ userId: user.id, username: user.username, role: user.role });
-
-    const response = successResponse(
-      {
-        user: {
-          id: user.id,
-          username: user.username,
-          nickname: user.nickname,
-          role: user.role,
-        },
-      },
-      '登录成功'
-    );
-
-    // 写入 HttpOnly Cookie，JS 无法读取，防止 XSS
-    response.cookies.set(TOKEN_COOKIE, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: COOKIE_MAX_AGE,
-      path: '/',
-    });
-
-    return response;
-  } finally {
-    client.release();
   }
+
+  if (!user) return errorResponse(ResultCode.UNAUTHORIZED, '账号或密码错误');
+  if (!user.is_active) return errorResponse(ResultCode.FORBIDDEN, '账号已被禁用');
+
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) return errorResponse(ResultCode.UNAUTHORIZED, '账号或密码错误');
+
+  // 更新 last_login（非关键，失败不影响登录）
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+  } else {
+    const client = await pool.connect();
+    try {
+      await client.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
+    } finally {
+      client.release();
+    }
+  }
+
+  const token = signToken({ userId: user.id, username: user.username, role: user.role });
+
+  const response = successResponse(
+    { user: { id: user.id, username: user.username, nickname: user.nickname, role: user.role } },
+    '登录成功'
+  );
+
+  // 写入 HttpOnly Cookie，JS 无法读取，防止 XSS
+  response.cookies.set(TOKEN_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: COOKIE_MAX_AGE,
+    path: '/',
+  });
+
+  return response;
 }

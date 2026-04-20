@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -53,12 +54,29 @@ export async function POST(request: NextRequest) {
     return errorResponse(ResultCode.BAD_REQUEST, '非法 action');
   }
 
+  // admin 只能操作 user 角色，且不能操作自己
+  const safeIds = ids.filter((id) => id !== auth.userId);
+  if (safeIds.length === 0) return errorResponse(ResultCode.BAD_REQUEST, '不能对自己执行此操作');
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    let targetIds = safeIds;
+    if (auth.role === 'admin') {
+      const { data } = await supabase.from('users').select('id').in('id', safeIds).eq('role', 'user');
+      targetIds = (data ?? []).map((r: { id: number }) => r.id);
+    }
+    if (targetIds.length === 0) return errorResponse(ResultCode.FORBIDDEN, '没有可操作的用户');
+    if (action === 'delete') {
+      await supabase.from('users').delete().in('id', targetIds).neq('role', 'superadmin');
+    } else {
+      await supabase.from('users').update({ is_active: action === 'enable', updated_at: new Date().toISOString() })
+        .in('id', targetIds).neq('role', 'superadmin');
+    }
+    return successResponse(null, '批量操作成功');
+  }
+
   const client = await pool.connect();
   try {
-    // admin 只能操作 user 角色，且不能操作自己
-    const safeIds = ids.filter((id) => id !== auth.userId);
-    if (safeIds.length === 0) return errorResponse(ResultCode.BAD_REQUEST, '不能对自己执行此操作');
-
     // 过滤掉 admin 无权操作的用户
     let targetIds = safeIds;
     if (auth.role === 'admin') {

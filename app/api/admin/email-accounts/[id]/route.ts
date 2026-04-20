@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -81,6 +82,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   sets.push(`updated_at = NOW()`);
   vals.push(id);
 
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const updates: Record<string, unknown> = {};
+    for (const key of allowed) { if (key in body) updates[key] = body[key]; }
+    updates.updated_at = new Date().toISOString();
+    const { data, error } = await supabase.from('email_accounts').update(updates).eq('id', id)
+      .select('id,name,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,updated_at').maybeSingle();
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    if (!data) return errorResponse(ResultCode.NOT_FOUND, '邮箱账号不存在');
+    return successResponse(data, '更新成功');
+  }
+
   const client = await pool.connect();
   try {
     const res = await client.query(
@@ -102,6 +115,15 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (auth.role !== 'superadmin') return errorResponse(ResultCode.FORBIDDEN, '仅超级管理员可管理邮箱配置');
 
   const { id } = await params;
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('email_accounts').delete().eq('id', id).select('id');
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    if (!data || data.length === 0) return errorResponse(ResultCode.NOT_FOUND, '邮箱账号不存在');
+    return successResponse(null, '删除成功');
+  }
+
   const client = await pool.connect();
   try {
     const res = await client.query('DELETE FROM email_accounts WHERE id = $1 RETURNING id', [id]);

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -84,6 +85,19 @@ export async function GET(request: NextRequest) {
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    let query = supabase.from('email_accounts')
+      .select('id,name,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,created_at,updated_at', { count: 'exact' });
+    if (q) query = query.or(`name.ilike.%${q}%,user_addr.ilike.%${q}%`);
+    if (isActive !== '') query = query.eq('is_active', isActive === 'true');
+    query = query.order('id', { ascending: false }).range(offset, offset + limit - 1);
+    const { data, count, error } = await query;
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    const total = count ?? 0;
+    return successResponse({ list: data, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  }
+
   const client = await pool.connect();
   try {
     const countRes = await client.query(`SELECT COUNT(*) FROM email_accounts ${where}`, params);
@@ -121,6 +135,16 @@ export async function POST(request: NextRequest) {
   }
   if (port !== undefined && (port < 1 || port > 65535)) {
     return errorResponse(ResultCode.BAD_REQUEST, '端口号必须在 1-65535 之间');
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('email_accounts').insert({
+      name, host, port: port ?? 465, secure: secure ?? true, user_addr, password,
+      from_name: from_name ?? '', is_active: is_active ?? true, use_for_reg: use_for_reg ?? false, use_for_pwd: use_for_pwd ?? false,
+    }).select('id,name,host,port,secure,user_addr,from_name,is_active,use_for_reg,use_for_pwd,created_at').single();
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    return successResponse(data, '创建成功');
   }
 
   const client = await pool.connect();

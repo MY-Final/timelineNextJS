@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getOtp, delOtp } from '@/lib/redis';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -56,6 +57,20 @@ export async function POST(request: NextRequest) {
   }
 
   const hash = await bcrypt.hash(password, 12);
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from('users').insert({
+      username, password: hash, nickname: nickname || username, email, role: 'user',
+    });
+    if (error) {
+      if (error.code === '23505') return errorResponse(ResultCode.BAD_REQUEST, '账号或邮箱已被注册');
+      return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    }
+    await delOtp(`reg:${email}`);
+    return successResponse(null, '注册成功');
+  }
+
   const client = await pool.connect();
   try {
     await client.query(

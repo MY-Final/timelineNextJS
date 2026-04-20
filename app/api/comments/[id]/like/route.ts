@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool, { DB_TYPE } from "@/lib/db";
+import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
 
@@ -28,6 +29,21 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const commentId = parseInt(id);
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc('toggle_like', {
+      p_user_id:     auth.userId,
+      p_target_type: 'comment',
+      p_target_id:   commentId,
+    });
+    if (error) {
+      console.error('[POST /api/comments/[id]/like supabase]', error);
+      return errorResponse(ResultCode.DB_ERROR, '操作失败');
+    }
+    const row = data?.[0] ?? data;
+    return successResponse({ liked: row?.liked ?? row?.[0], like_count: row?.like_count ?? row?.[1] ?? 0 });
+  }
 
   const client = await pool.connect();
   try {

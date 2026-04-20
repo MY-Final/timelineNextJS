@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import Redis from 'ioredis';
 import { Redis as UpstashRedis } from '@upstash/redis';
-import pool from '@/lib/db';
-import { generateOtpCode, setOtp, REDIS_TYPE } from '@/lib/redis';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
+import { generateOtpCode, setOtp, REDIS_TYPE, getRedis } from '@/lib/redis';
 import { sendOtpMail } from '@/lib/mailer';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
-import { getRedis } from '@/lib/redis';
 
 /**
  * @swagger
@@ -54,17 +54,24 @@ export async function POST(request: NextRequest) {
   }
 
   // 注册时：邮箱不能已存在；重置时：邮箱必须存在
-  const client = await pool.connect();
-  try {
-    const existRes = await client.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (purpose === 'register' && existRes.rows.length > 0) {
-      return errorResponse(ResultCode.BAD_REQUEST, '该邮箱已被注册');
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data: existData } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+    if (purpose === 'register' && existData) return errorResponse(ResultCode.BAD_REQUEST, '该邮箱已被注册');
+    if (purpose === 'reset' && !existData) return errorResponse(ResultCode.NOT_FOUND, '未找到使用该邮箱的账号');
+  } else {
+    const client = await pool.connect();
+    try {
+      const existRes = await client.query('SELECT id FROM users WHERE email = $1', [email]);
+      if (purpose === 'register' && existRes.rows.length > 0) {
+        return errorResponse(ResultCode.BAD_REQUEST, '该邮箱已被注册');
+      }
+      if (purpose === 'reset' && existRes.rows.length === 0) {
+        return errorResponse(ResultCode.NOT_FOUND, '未找到使用该邮箱的账号');
+      }
+    } finally {
+      client.release();
     }
-    if (purpose === 'reset' && existRes.rows.length === 0) {
-      return errorResponse(ResultCode.NOT_FOUND, '未找到使用该邮箱的账号');
-    }
-  } finally {
-    client.release();
   }
 
   // 防刷限流：60s 内只能发一次

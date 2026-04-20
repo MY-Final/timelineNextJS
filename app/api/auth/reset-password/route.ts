@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getOtp, delOtp } from '@/lib/redis';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -53,6 +54,18 @@ export async function POST(request: NextRequest) {
   }
 
   const hash = await bcrypt.hash(newPassword, 12);
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('users')
+      .update({ password: hash, updated_at: new Date().toISOString() })
+      .eq('email', email).select('id');
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    if (!data || data.length === 0) return errorResponse(ResultCode.NOT_FOUND, '未找到该邮箱对应账号');
+    await delOtp(`pwd:${email}`);
+    return successResponse(null, '密码重置成功，请重新登录');
+  }
+
   const client = await pool.connect();
   try {
     const res = await client.query(

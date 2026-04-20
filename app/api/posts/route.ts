@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -125,6 +126,31 @@ export async function GET(request: NextRequest) {
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc('get_admin_posts', {
+      p_status:       statusFilter,
+      p_is_public:    isPublicFilter ?? null,
+      p_q:            q,
+      p_created_from: createdFrom || null,
+      p_created_to:   createdTo || null,
+      p_event_from:   eventFrom || null,
+      p_event_to:     eventTo || null,
+      p_limit:        limit,
+      p_offset:       offset,
+    });
+    if (error) {
+      console.error('[GET /api/posts supabase]', error);
+      return errorResponse(ResultCode.DB_ERROR, '数据库查询失败');
+    }
+    const rows = data ?? [];
+    const total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+    return successResponse({
+      list: rows.map((r: Record<string, unknown>) => { const { total_count: _, ...rest } = r; return rest; }),
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  }
+
   const client = await pool.connect();
   try {
     const countResult = await client.query(
@@ -236,6 +262,27 @@ export async function POST(request: NextRequest) {
   for (const img of images) {
     if (!img.url || !img.storage_key) {
       return errorResponse(ResultCode.BAD_REQUEST, '图片缺少 url 或 storage_key');
+    }
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    try {
+      const { data: postId, error } = await supabase.rpc('create_post_with_images', {
+        p_user_id:    authUser.userId,
+        p_title:      title,
+        p_content:    content,
+        p_tags:       tags,
+        p_is_public:  is_public,
+        p_status:     status,
+        p_event_date: event_date ?? null,
+        p_images:     images,
+      });
+      if (error) throw error;
+      return successResponse({ id: postId }, '帖子创建成功', String(postId));
+    } catch (err) {
+      console.error('[POST /api/posts supabase]', err);
+      return errorResponse(ResultCode.DB_ERROR, '数据库写入失败');
     }
   }
 

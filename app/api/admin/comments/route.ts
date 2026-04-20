@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool, { DB_TYPE } from "@/lib/db";
+import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
 
@@ -20,8 +21,23 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status") ?? ""; // visible | hidden | deleted | '' (all)
   const postId = searchParams.get("post_id") ? parseInt(searchParams.get("post_id")!) : null;
 
-  const client = await pool.connect();
+  const client = DB_TYPE !== 'supabase' ? await pool.connect() : null;
   try {
+    if (DB_TYPE === 'supabase') {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.rpc('get_admin_comments', {
+        p_status: status,
+        p_post_id: postId,
+        p_keyword: keyword,
+        p_limit: limit,
+        p_offset: offset,
+      });
+      if (error) return errorResponse(ResultCode.DB_ERROR, '查询失败');
+      const total = data?.[0]?.total_count ?? 0;
+      const list = (data ?? []).map(({ total_count: _, ...rest }: { total_count: unknown; [key: string]: unknown }) => rest);
+      return successResponse({ list, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+    }
+
     const conditions: string[] = ["c.status != 'deleted'"];
     const params: (string | number)[] = [];
     let i = 1;
@@ -42,13 +58,13 @@ export async function GET(request: NextRequest) {
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const countRes = await client.query(
+    const countRes = await client!.query(
       `SELECT COUNT(*) FROM comments c JOIN users u ON u.id = c.user_id ${where}`,
       params
     );
     const total = parseInt(countRes.rows[0].count);
 
-    const listRes = await client.query(
+    const listRes = await client!.query(
       `SELECT
          c.id, c.post_id, c.parent_id, c.content, c.like_count,
          c.status, c.created_at,
@@ -71,6 +87,6 @@ export async function GET(request: NextRequest) {
     console.error("[GET /api/admin/comments]", e);
     return errorResponse(ResultCode.DB_ERROR, "查询失败");
   } finally {
-    client.release();
+    client?.release();
   }
 }

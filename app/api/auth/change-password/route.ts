@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -21,6 +22,17 @@ export async function PUT(request: NextRequest) {
   }
   if (newPassword.length < 6) {
     return errorResponse(ResultCode.BAD_REQUEST, '新密码长度不能少于 6 位');
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data: row } = await supabase.from('users').select('password').eq('id', user.userId).maybeSingle();
+    if (!row) return errorResponse(ResultCode.NOT_FOUND, '用户不存在');
+    const valid = await bcrypt.compare(oldPassword, row.password);
+    if (!valid) return errorResponse(ResultCode.UNAUTHORIZED, '原密码错误');
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await supabase.from('users').update({ password: hashed, updated_at: new Date().toISOString() }).eq('id', user.userId);
+    return successResponse(null, '密码修改成功，请重新登录');
   }
 
   const client = await pool.connect();

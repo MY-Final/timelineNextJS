@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -75,6 +76,29 @@ export async function GET(request: NextRequest, { params }: Params) {
   const postId = Number(id);
   if (!Number.isInteger(postId) || postId <= 0) {
     return errorResponse(ResultCode.BAD_REQUEST, '无效的帖子 ID');
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const [{ data: post, error: err1 }, { data: images, error: err2 }] = await Promise.all([
+      supabase.from('posts')
+        .select('id,title,content,tags,is_public,status,like_count,comment_count,created_at,updated_at,event_date,users!user_id(username,nickname,avatar)')
+        .eq('id', postId).neq('status', 'deleted').maybeSingle(),
+      supabase.from('post_images')
+        .select('id,url,original_name,mime_type,file_size,width,height,sort_order')
+        .eq('post_id', postId).order('sort_order'),
+    ]);
+    if (err1 || err2) return errorResponse(ResultCode.DB_ERROR, '数据库查询失败');
+    if (!post) return errorResponse(ResultCode.NOT_FOUND, '帖子不存在');
+    const user = (post as Record<string, unknown>).users as Record<string, unknown> | null;
+    return successResponse({
+      ...post,
+      users: undefined,
+      author_username: user?.username,
+      author_nickname: user?.nickname,
+      author_avatar:   user?.avatar,
+      images: images ?? [],
+    });
   }
 
   const client = await pool.connect();
@@ -174,6 +198,42 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       if (!img.url || !img.storage_key) {
         return errorResponse(ResultCode.BAD_REQUEST, '图片缺少 url 或 storage_key');
       }
+    }
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    try {
+      // 构建需要更新的字段
+      const updates: Record<string, unknown> = {};
+      if ('title' in body) updates.title = (body.title ?? '').trim();
+      if ('content' in body) {
+        const c = (body.content ?? '').trim();
+        if (!c) return errorResponse(ResultCode.BAD_REQUEST, '内容不能为空');
+        updates.content = c;
+      }
+      if ('tags' in body) updates.tags = Array.isArray(body.tags) ? body.tags.filter(Boolean) : [];
+      if ('is_public' in body) updates.is_public = body.is_public !== false;
+      if ('status' in body) {
+        if (body.status !== 'published' && body.status !== 'draft') {
+          return errorResponse(ResultCode.BAD_REQUEST, 'status 只能为 published 或 draft');
+        }
+        updates.status = body.status;
+      }
+      if ('event_date' in body) updates.event_date = body.event_date || null;
+
+      const { data: ok, error } = await supabase.rpc('update_post_with_images', {
+        p_post_id:        postId,
+        p_updates:        updates,
+        p_replace_images: replaceImages,
+        p_images:         images,
+      });
+      if (error) throw error;
+      if (!ok) return errorResponse(ResultCode.NOT_FOUND, '帖子不存在');
+      return successResponse({ id: postId }, '帖子更新成功');
+    } catch (err) {
+      console.error('[PATCH /api/posts/[id] supabase]', err);
+      return errorResponse(ResultCode.DB_ERROR, '数据库操作失败');
     }
   }
 
@@ -283,6 +343,16 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const postId = Number(id);
   if (!Number.isInteger(postId) || postId <= 0) {
     return errorResponse(ResultCode.BAD_REQUEST, '无效的帖子 ID');
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('posts')
+      .update({ status: 'deleted', updated_at: new Date().toISOString() })
+      .eq('id', postId).neq('status', 'deleted').select('id');
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库操作失败');
+    if (!data || data.length === 0) return errorResponse(ResultCode.NOT_FOUND, '帖子不存在或已删除');
+    return successResponse({ id: postId }, '帖子已删除');
   }
 
   const client = await pool.connect();

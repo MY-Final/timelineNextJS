@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 import { getAuthUser } from '@/lib/auth';
 
@@ -23,6 +24,19 @@ import { getAuthUser } from '@/lib/auth';
 export async function GET(request: NextRequest) {
   const auth = getAuthUser(request);
   const currentUserId = auth instanceof NextResponse ? null : auth.userId;
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc('get_timeline', {
+      p_user_id: currentUserId ?? null,
+    });
+    if (error) {
+      console.error('[GET /api/timeline supabase]', error);
+      return errorResponse(ResultCode.DB_ERROR, '数据库查询失败');
+    }
+    return successResponse(data ?? []);
+  }
+
   const client = await pool.connect();
   try {
     const rows = await client.query(`

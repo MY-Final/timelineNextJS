@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool, { DB_TYPE } from "@/lib/db";
+import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
 
@@ -57,6 +58,29 @@ export async function GET(request: NextRequest) {
   const auth = getAuthUser(request);
   const currentUserId = auth instanceof NextResponse ? null : auth.userId;
 
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const [{ data: comments, error: err1 }, { count, error: err2 }] = await Promise.all([
+      supabase.rpc('get_post_comments', {
+        p_post_id: postId,
+        p_limit:   limit,
+        p_offset:  offset,
+        p_user_id: currentUserId ?? null,
+      }),
+      supabase.from('comments').select('*', { count: 'exact', head: true })
+        .eq('post_id', postId).eq('status', 'visible'),
+    ]);
+    if (err1 || err2) {
+      console.error('[GET /api/comments supabase]', err1 ?? err2);
+      return errorResponse(ResultCode.DB_ERROR, '数据库查询失败');
+    }
+    const total = count ?? 0;
+    return successResponse({
+      list: comments ?? [],
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  }
+
   const client = await pool.connect();
   try {
     const [{ rows: comments }, { rows: countRows }] = await Promise.all([
@@ -110,6 +134,55 @@ export async function POST(request: NextRequest) {
     return errorResponse(ResultCode.BAD_REQUEST, "评论内容不能超过2000字");
   }
 
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    try {
+      // 验证帖子
+      const { data: postData } = await supabase.from('posts').select('id')
+        .eq('id', post_id).eq('status', 'published').eq('is_public', true).maybeSingle();
+      if (!postData) return errorResponse(ResultCode.NOT_FOUND, "帖子不存在");
+
+      // 处理 parent_id
+      let actualParentId = parent_id;
+      if (parent_id) {
+        const { data: parentData } = await supabase.from('comments').select('id,parent_id')
+          .eq('id', parent_id).eq('post_id', post_id).eq('status', 'visible').maybeSingle();
+        if (!parentData) return errorResponse(ResultCode.NOT_FOUND, "父评论不存在");
+        if (parentData.parent_id) actualParentId = parentData.parent_id;
+      }
+
+      const { data: newComment, error: insertErr } = await supabase.from('comments')
+        .insert({ post_id, user_id: auth.userId, parent_id: actualParentId, reply_to_user_id, content: content.trim() })
+        .select('id,post_id,parent_id,reply_to_user_id,content,like_count,created_at')
+        .single();
+      if (insertErr) throw insertErr;
+
+      const { data: userRow } = await supabase.from('users').select('id,username,nickname,avatar')
+        .eq('id', auth.userId).single();
+
+      let replyToUsername = null, replyToNickname = null;
+      if (reply_to_user_id) {
+        const { data: rtuRow } = await supabase.from('users').select('username,nickname')
+          .eq('id', reply_to_user_id).maybeSingle();
+        if (rtuRow) { replyToUsername = rtuRow.username; replyToNickname = rtuRow.nickname; }
+      }
+
+      return successResponse({
+        ...newComment,
+        user_id: userRow?.id,
+        username: userRow?.username,
+        nickname: userRow?.nickname,
+        avatar: userRow?.avatar,
+        is_liked: false,
+        reply_to_username: replyToUsername,
+        reply_to_nickname: replyToNickname,
+      }, "评论成功");
+    } catch (e) {
+      console.error("[POST /api/comments supabase]", e);
+      return errorResponse(ResultCode.DB_ERROR, "评论发送失败");
+    }
+  }
+
   const client = await pool.connect();
   try {
     // 验证帖子存在且公开
@@ -153,6 +226,7 @@ export async function POST(request: NextRequest) {
       );
       if (rtuRows.length) { replyToUsername = rtuRows[0].username; replyToNickname = rtuRows[0].nickname; }
     }
+    void comment;
     return successResponse({ ...rows[0], ...userRows[0], is_liked: false, reply_to_username: replyToUsername, reply_to_nickname: replyToNickname }, "评论成功");
   } catch (e) {
     console.error("[POST /api/comments]", e);

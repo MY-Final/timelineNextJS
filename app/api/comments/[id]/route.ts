@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool, { DB_TYPE } from "@/lib/db";
+import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
 
@@ -29,6 +30,21 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const commentId = parseInt(id);
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('comments').select('user_id')
+      .eq('id', commentId).neq('status', 'deleted').maybeSingle();
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库查询失败');
+    if (!data) return errorResponse(ResultCode.NOT_FOUND, "评论不存在");
+
+    const isOwner = data.user_id === auth.userId;
+    const isAdmin = auth.role === "admin" || auth.role === "superadmin";
+    if (!isOwner && !isAdmin) return errorResponse(ResultCode.FORBIDDEN, "无权删除此评论");
+
+    await supabase.from('comments').update({ status: 'deleted', updated_at: new Date().toISOString() }).eq('id', commentId);
+    return successResponse(null, "删除成功");
+  }
 
   const client = await pool.connect();
   try {

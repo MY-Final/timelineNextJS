@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import pool, { DB_TYPE } from "@/lib/db";
+import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
 
@@ -16,6 +17,14 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const commentId = parseInt(id);
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('comments').delete().eq('id', commentId).select('id');
+    if (error) return errorResponse(ResultCode.DB_ERROR, '删除失败');
+    if (!data || data.length === 0) return errorResponse(ResultCode.NOT_FOUND, '评论不存在');
+    return successResponse(null, '删除成功');
+  }
 
   const client = await pool.connect();
   try {
@@ -47,6 +56,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const newStatus = body.status;
   if (!newStatus || !["visible", "hidden"].includes(newStatus)) {
     return errorResponse(ResultCode.BAD_REQUEST, "status 只能为 visible 或 hidden");
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('comments')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', commentId).select('id,status');
+    if (error) return errorResponse(ResultCode.DB_ERROR, '更新失败');
+    if (!data || data.length === 0) return errorResponse(ResultCode.NOT_FOUND, '评论不存在');
+    return successResponse(data[0], '更新成功');
   }
 
   const client = await pool.connect();

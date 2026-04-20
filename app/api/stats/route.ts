@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -39,6 +40,38 @@ export async function GET(request: NextRequest) {
   if (authUser instanceof NextResponse) return authUser;
   if (authUser.role !== 'admin' && authUser.role !== 'superadmin') {
     return errorResponse(ResultCode.FORBIDDEN, '权限不足');
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const [
+        { count: postTotal },
+        { count: postToday },
+        { count: commentTotal },
+        { data: likeData },
+      ] = await Promise.all([
+        supabase.from('posts').select('*', { count: 'exact', head: true }).neq('status', 'deleted'),
+        supabase.from('posts').select('*', { count: 'exact', head: true }).neq('status', 'deleted').gte('created_at', today.toISOString()),
+        supabase.from('comments').select('*', { count: 'exact', head: true }).neq('status', 'deleted'),
+        supabase.from('posts').select('like_count').neq('status', 'deleted'),
+      ]);
+
+      const likeTotal = (likeData ?? []).reduce((sum: number, r: { like_count: number }) => sum + (r.like_count || 0), 0);
+
+      return successResponse({
+        post_total:    postTotal ?? 0,
+        post_today:    postToday ?? 0,
+        comment_total: commentTotal ?? 0,
+        like_total:    likeTotal,
+      });
+    } catch (err) {
+      console.error('[GET /api/stats supabase]', err);
+      return errorResponse(ResultCode.DB_ERROR, '数据库查询失败');
+    }
   }
 
   const client = await pool.connect();

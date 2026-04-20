@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -73,6 +74,17 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (!isAdminOrSuper(auth.role)) return errorResponse(ResultCode.FORBIDDEN, '无权限');
 
   const { id } = await params;
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.from('users')
+      .select('id,username,nickname,avatar,email,phone,bio,gender,role,is_active,last_login,created_at')
+      .eq('id', id).maybeSingle();
+    if (!data) return errorResponse(ResultCode.NOT_FOUND, '用户不存在');
+    if (auth.role === 'admin' && data.role !== 'user') return errorResponse(ResultCode.FORBIDDEN, '无权限查看该用户');
+    return successResponse(data);
+  }
+
   const client = await pool.connect();
   try {
     const res = await client.query(
@@ -103,12 +115,20 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return errorResponse(ResultCode.BAD_REQUEST, '请求体格式错误');
   }
 
-  const client = await pool.connect();
+  const client = DB_TYPE !== 'supabase' ? await pool.connect() : null;
   try {
-    // 先查出目标用户
-    const existing = await client.query('SELECT role FROM users WHERE id = $1', [id]);
-    if (!existing.rows[0]) return errorResponse(ResultCode.NOT_FOUND, '用户不存在');
-    const existingRole = existing.rows[0].role;
+    let existingRole: string;
+    if (DB_TYPE === 'supabase') {
+      const supabase = getSupabaseClient();
+      const { data: existingData } = await supabase.from('users').select('role').eq('id', id).maybeSingle();
+      if (!existingData) return errorResponse(ResultCode.NOT_FOUND, '用户不存在');
+      existingRole = existingData.role;
+    } else {
+      // 先查出目标用户
+      const existing = await client!.query('SELECT role FROM users WHERE id = $1', [id]);
+      if (!existing.rows[0]) return errorResponse(ResultCode.NOT_FOUND, '用户不存在');
+      existingRole = existing.rows[0].role;
+    }
 
     // admin 只能操作 user 角色
     if (auth.role === 'admin' && existingRole !== 'user') {
@@ -161,7 +181,27 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     sets.push(`updated_at = NOW()`);
     vals.push(id);
 
-    const res = await client.query(
+    if (DB_TYPE === 'supabase') {
+      const supabase = getSupabaseClient();
+      const supabaseUpdates: Record<string, unknown> = {};
+      const allowed2 = ['nickname', 'email', 'phone', 'bio', 'gender', 'avatar', 'is_active', 'role'];
+      for (const key of allowed2) {
+        if (key in body) supabaseUpdates[key] = body[key];
+      }
+      if (body.password) {
+        supabaseUpdates.password = await bcrypt.hash(body.password as string, 12);
+      }
+      supabaseUpdates.updated_at = new Date().toISOString();
+      const { data, error } = await supabase.from('users').update(supabaseUpdates).eq('id', id)
+        .select('id,username,nickname,email,phone,role,is_active,gender,avatar').single();
+      if (error) {
+        if (error.code === '23505') return errorResponse(ResultCode.BAD_REQUEST, '邮箱或手机号已被使用');
+        return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+      }
+      return successResponse(data, '更新成功');
+    }
+
+    const res = await client!.query(
       `UPDATE users SET ${sets.join(', ')} WHERE id = $${pi}
        RETURNING id, username, nickname, email, phone, role, is_active, gender, avatar`,
       vals
@@ -172,7 +212,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (e.code === '23505') return errorResponse(ResultCode.BAD_REQUEST, '邮箱或手机号已被使用');
     return errorResponse(ResultCode.DB_ERROR, '数据库错误');
   } finally {
-    client.release();
+    client?.release();
   }
 }
 
@@ -185,6 +225,16 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const numId = parseInt(id);
   if (numId === auth.userId) return errorResponse(ResultCode.BAD_REQUEST, '不能删除自己');
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data: existingData } = await supabase.from('users').select('role').eq('id', id).maybeSingle();
+    if (!existingData) return errorResponse(ResultCode.NOT_FOUND, '用户不存在');
+    if (existingData.role === 'superadmin') return errorResponse(ResultCode.FORBIDDEN, '不能删除超级管理员');
+    if (auth.role === 'admin' && existingData.role !== 'user') return errorResponse(ResultCode.FORBIDDEN, '无权限删除该用户');
+    await supabase.from('users').delete().eq('id', id);
+    return successResponse(null, '删除成功');
+  }
 
   const client = await pool.connect();
   try {

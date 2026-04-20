@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
 /**
@@ -28,6 +29,17 @@ import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 // 无需鉴权（公开接口）
 // ─────────────────────────────────────────────
 export async function GET() {
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.rpc('get_tags');
+    if (error) {
+      console.error('[GET /api/tags supabase]', error);
+      return errorResponse(ResultCode.DB_ERROR, '数据库查询失败');
+    }
+    const tags: string[] = (data ?? []).map((r: { tag: string }) => r.tag).filter(Boolean);
+    return successResponse(tags);
+  }
+
   const client = await pool.connect();
   try {
     const result = await client.query(`

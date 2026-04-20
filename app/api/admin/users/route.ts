@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -100,6 +101,20 @@ export async function GET(request: NextRequest) {
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    let query = supabase.from('users').select('id,username,nickname,avatar,email,phone,bio,gender,role,is_active,last_login,created_at', { count: 'exact' });
+    if (q) query = query.or(`username.ilike.%${q}%,nickname.ilike.%${q}%,email.ilike.%${q}%`);
+    if (role) query = query.eq('role', role);
+    if (isActive !== '') query = query.eq('is_active', isActive === 'true');
+    if (auth.role === 'admin') query = query.eq('role', 'user');
+    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+    const { data, count, error } = await query;
+    if (error) return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    const total = count ?? 0;
+    return successResponse({ list: data, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  }
+
   const client = await pool.connect();
   try {
     const countRes = await client.query(`SELECT COUNT(*) FROM users ${where}`, params);
@@ -157,6 +172,20 @@ export async function POST(request: NextRequest) {
   }
 
   const hash = await bcrypt.hash(password, 12);
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('users').insert({
+      username, password: hash, nickname: nickname ?? username,
+      email: email ?? null, phone: phone ?? null, role: targetRole, bio: bio ?? null, gender: gender ?? 0,
+    }).select('id,username,nickname,email,phone,role,is_active,created_at').single();
+    if (error) {
+      if (error.code === '23505') return errorResponse(ResultCode.BAD_REQUEST, '账号或邮箱已存在');
+      return errorResponse(ResultCode.DB_ERROR, '数据库错误');
+    }
+    return successResponse(data, '创建成功');
+  }
+
   const client = await pool.connect();
   try {
     const res = await client.query(

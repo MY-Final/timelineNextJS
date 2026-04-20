@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -44,6 +45,18 @@ export async function POST(request: NextRequest) {
   const { action, ids } = body;
   if (!action || !Array.isArray(ids) || ids.length === 0) {
     return errorResponse(ResultCode.BAD_REQUEST, '缺少 action 或 ids');
+  }
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    if (action === 'delete') {
+      await supabase.from('email_accounts').delete().in('id', ids);
+    } else if (action === 'enable' || action === 'disable') {
+      await supabase.from('email_accounts').update({ is_active: action === 'enable', updated_at: new Date().toISOString() }).in('id', ids);
+    } else {
+      return errorResponse(ResultCode.BAD_REQUEST, '非法 action');
+    }
+    return successResponse(null, '批量操作成功');
   }
 
   const client = await pool.connect();

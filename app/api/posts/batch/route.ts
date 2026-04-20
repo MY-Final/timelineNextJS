@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import pool, { DB_TYPE } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 
@@ -65,6 +66,36 @@ export async function POST(request: NextRequest) {
   }
 
   const placeholders = validIds.map((_, i) => `$${i + 1}`).join(',');
+
+  if (DB_TYPE === 'supabase') {
+    const supabase = getSupabaseClient();
+    const now = new Date().toISOString();
+    try {
+      switch (action) {
+        case 'publish':
+          await supabase.from('posts').update({ status: 'published', updated_at: now }).in('id', validIds).neq('status', 'deleted');
+          break;
+        case 'unpublish':
+          await supabase.from('posts').update({ status: 'draft', updated_at: now }).in('id', validIds).neq('status', 'deleted');
+          break;
+        case 'hide':
+          await supabase.from('posts').update({ is_public: false, updated_at: now }).in('id', validIds).neq('status', 'deleted');
+          break;
+        case 'show':
+          await supabase.from('posts').update({ is_public: true, updated_at: now }).in('id', validIds).neq('status', 'deleted');
+          break;
+        case 'delete':
+          await supabase.from('posts').update({ status: 'deleted', updated_at: now }).in('id', validIds);
+          break;
+        default:
+          return errorResponse(ResultCode.BAD_REQUEST, `不支持的操作: ${action}`);
+      }
+      return successResponse({ affected: validIds.length }, `批量操作成功，影响 ${validIds.length} 条记录`);
+    } catch (err) {
+      console.error('[POST /api/posts/batch supabase]', err);
+      return errorResponse(ResultCode.DB_ERROR, '数据库操作失败');
+    }
+  }
 
   const client = await pool.connect();
   try {
