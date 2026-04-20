@@ -12,7 +12,6 @@ export const DB_TYPE = process.env.DB_TYPE || 'self-hosted';
 export function createDbPool(): Pool {
   console.log('[DB] Creating pool with type:', DB_TYPE);
   if (DB_TYPE === 'supabase') {
-    // Supabase: 使用连接字符串
     const supabaseUrl = process.env.SUPABASE_DB_URL;
     if (!supabaseUrl) {
       throw new Error('SUPABASE_DB_URL 环境变量未设置');
@@ -20,8 +19,12 @@ export function createDbPool(): Pool {
     return new Pool({
       connectionString: supabaseUrl,
       ssl: { rejectUnauthorized: false },
+      // 针对 Serverless 优化的配置
+      max: 1, // 每个实例只允许 1 个连接，防止撑爆 Supabase
+      connectionTimeoutMillis: 5000, // 5秒超时
+      idleTimeoutMillis: 30000, // 30秒空闲释放
     });
-  } else {
+  }else {
     // 自建 PostgreSQL
     return new Pool({
       host: process.env.DB_HOST,
