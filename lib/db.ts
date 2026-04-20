@@ -19,6 +19,7 @@ export function createDbPool(): Pool {
     }
     return new Pool({
       connectionString: supabaseUrl,
+      ssl: { rejectUnauthorized: false },
     });
   } else {
     // 自建 PostgreSQL
