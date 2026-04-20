@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Heart, User } from "lucide-react";
 import ILoveYouDisplay from "@/components/easter-eggs/ILoveYouDisplay";
@@ -12,14 +12,6 @@ import {
   useLongPress,
   useSecretClick,
 } from "@/lib/easter-eggs";
-
-const LOVE_START_DATE = new Date("2026-03-08T18:35:00");
-const LOVE_START_DATE_LABEL = "2026年3月8日";
-const PERSON_A = "阳阳";
-const PERSON_B = "湘湘";
-
-const avatarA = "https://q1.qlogo.cn/g?b=qq&nk=3486159271&s=640";
-const avatarB = "https://q1.qlogo.cn/g?b=qq&nk=1789859045&s=640";
 
 interface TimerValue {
   days: number;
@@ -57,6 +49,37 @@ function useLoveTimer(startDate: Date): TimerValue {
   return value;
 }
 
+interface SiteInfo {
+  site_name: string;
+  love_start_date: string;
+  love_start_date_label: string;
+  person_a_name: string;
+  person_b_name: string;
+  avatar_a: string;
+  avatar_b: string;
+}
+
+const DEFAULT_SITE_INFO: SiteInfo = {
+  site_name: 'Our Story',
+  love_start_date: '2026-03-08T18:35:00',
+  love_start_date_label: '2026年3月8日',
+  person_a_name: '阳阳',
+  person_b_name: '湘湘',
+  avatar_a: 'https://q1.qlogo.cn/g?b=qq&nk=3486159271&s=640',
+  avatar_b: 'https://q1.qlogo.cn/g?b=qq&nk=1789859045&s=640',
+};
+
+function useSiteInfo() {
+  const [info, setInfo] = useState<SiteInfo>(DEFAULT_SITE_INFO);
+  useEffect(() => {
+    fetch('/api/site-info')
+      .then(r => r.json())
+      .then((data: Partial<SiteInfo>) => setInfo({ ...DEFAULT_SITE_INFO, ...data }))
+      .catch(() => {/* 保持默认值 */});
+  }, []);
+  return info;
+}
+
 function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
@@ -79,7 +102,12 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
 }
 
 export default function HomePage() {
-  const { days, hours, minutes, seconds } = useLoveTimer(LOVE_START_DATE);
+  const siteInfo = useSiteInfo();
+  const loveStartDate = useMemo(
+    () => new Date(siteInfo.love_start_date),
+    [siteInfo.love_start_date]
+  );
+  const { days, hours, minutes, seconds } = useLoveTimer(loveStartDate);
   const { hearts, spawn: spawnHearts } = useFloatingHearts(12);
   const { active: secretMode, click: handleSecretClick } = useSecretClick(10, 400);
   const { active: konamiMode, progress: konamiProgress, sequence: konamiSequence } = useKonamiCode();
@@ -93,8 +121,9 @@ export default function HomePage() {
   const [anniversaryToday, setAnniversaryToday] = useState(false);
 
   useEffect(() => {
-    setAnniversaryToday(isAnniversary(LOVE_START_DATE));
-  }, []);
+    setAnniversaryToday(isAnniversary(loveStartDate));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteInfo.love_start_date]);
 
   return (
     <main
@@ -111,7 +140,7 @@ export default function HomePage() {
       <div className="home-top">
         <div className="date-badge">
           <div className="date-badge-line" />
-          <p className="date-badge-text">Since {LOVE_START_DATE_LABEL}</p>
+          <p className="date-badge-text">Since {siteInfo.love_start_date_label}</p>
         </div>
       </div>
 
@@ -119,7 +148,7 @@ export default function HomePage() {
         <p className="home-title">our story</p>
 
         <div className="couple-section" role="img" aria-label="我们的头像">
-          <Avatar src={avatarA} name={PERSON_A} />
+          <Avatar src={siteInfo.avatar_a} name={siteInfo.person_a_name} />
 
           <div
             className="heart-bridge"
@@ -154,7 +183,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <Avatar src={avatarB} name={PERSON_B} />
+          <Avatar src={siteInfo.avatar_b} name={siteInfo.person_b_name} />
         </div>
 
         <div className="days-display">

@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import pool from './db';
+import { getSetting } from './site-settings';
 
 export interface EmailAccount {
   id: number;
@@ -38,10 +39,10 @@ async function getTemplate(type: 'register' | 'reset'): Promise<TemplateDef> {
 }
 
 /** 默认注册验证码 HTML 模板 */
-export function defaultOtpHtml(code: string, title: string, action: string): string {
+export function defaultOtpHtml(code: string, title: string, action: string, siteName = 'Our Story'): string {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #fff5f7; border-radius: 16px;">
-      <h2 style="color: #c0446a; margin: 0 0 16px; font-size: 20px;">Our Story — ${title}</h2>
+      <h2 style="color: #c0446a; margin: 0 0 16px; font-size: 20px;">${siteName} — ${title}</h2>
       <p style="color: #6b5060; font-size: 14px; line-height: 1.8; margin: 0 0 24px;">
         您正在${action}，验证码如下，<strong>有效期 5 分钟</strong>，请勿泄露给他人。
       </p>
@@ -120,21 +121,22 @@ export async function sendOtpMail(
     return { success: false, message: '暂无可用的发件邮箱，请联系管理员配置' };
   }
 
+  const siteName = await getSetting('site_name');
   const title = purpose === 'register' ? '注册验证码' : '密码重置验证码';
   const action = purpose === 'register' ? '完成注册' : '重置密码';
 
   const tpl = await getTemplate(purpose);
-  let subject = `【Our Story】${title}`;
+  let subject = `【${siteName}】${title}`;
   let html: string;
 
   if (tpl.useCustom && tpl.customHtml) {
-    const vars = { code, title, action, site: 'Our Story' };
+    const vars = { code, title, action, site: siteName };
     html = renderTemplate(tpl.customHtml, vars);
     if (tpl.customSubject) {
       subject = renderTemplate(tpl.customSubject, vars);
     }
   } else {
-    html = defaultOtpHtml(code, title, action);
+    html = defaultOtpHtml(code, title, action, siteName);
   }
 
   try {

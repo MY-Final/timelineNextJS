@@ -4,6 +4,7 @@ import pool, { DB_TYPE } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
 import { getOtp, delOtp } from '@/lib/redis';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
+import { getSetting } from '@/lib/site-settings';
 
 /**
  * @swagger
@@ -45,6 +46,12 @@ export async function POST(request: NextRequest) {
   }
   if (password.length < 6) {
     return errorResponse(ResultCode.BAD_REQUEST, '密码长度不能少于 6 位');
+  }
+
+  // 注册开关
+  const regEnabled = await getSetting('registration_enabled');
+  if (regEnabled !== 'true') {
+    return errorResponse(ResultCode.FORBIDDEN, '注册功能已关闭，请联系管理员');
   }
 
   // 验证邮箱验证码
