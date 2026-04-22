@@ -3,6 +3,7 @@ import pool, { DB_TYPE } from "@/lib/db";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
+import { sendNotification } from "@/lib/onebot";
 
 /**
  * @swagger
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
         if (rtuRow) { replyToUsername = rtuRow.username; replyToNickname = rtuRow.nickname; }
       }
 
-      return successResponse({
+      const response = {
         ...newComment,
         user_id: userRow?.id,
         username: userRow?.username,
@@ -176,7 +177,14 @@ export async function POST(request: NextRequest) {
         is_liked: false,
         reply_to_username: replyToUsername,
         reply_to_nickname: replyToNickname,
-      }, "评论成功");
+      };
+      void sendNotification('comment', {
+        userId: auth.userId,
+        username: userRow?.nickname || userRow?.username,
+        postId: post_id,
+        content: content.trim().slice(0, 80),
+      });
+      return successResponse(response, "评论成功");
     } catch (e) {
       console.error("[POST /api/comments supabase]", e);
       return errorResponse(ResultCode.DB_ERROR, "评论发送失败");
@@ -227,6 +235,12 @@ export async function POST(request: NextRequest) {
       if (rtuRows.length) { replyToUsername = rtuRows[0].username; replyToNickname = rtuRows[0].nickname; }
     }
     void comment;
+    void sendNotification('comment', {
+      userId: auth.userId,
+      username: userRows[0]?.nickname || userRows[0]?.username,
+      postId: post_id,
+      content: content.trim().slice(0, 80),
+    });
     return successResponse({ ...rows[0], ...userRows[0], is_liked: false, reply_to_username: replyToUsername, reply_to_nickname: replyToNickname }, "评论成功");
   } catch (e) {
     console.error("[POST /api/comments]", e);

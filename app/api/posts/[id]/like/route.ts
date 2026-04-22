@@ -3,6 +3,7 @@ import pool, { DB_TYPE } from "@/lib/db";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
+import { sendNotification } from "@/lib/onebot";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -42,6 +43,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       return errorResponse(ResultCode.DB_ERROR, '操作失败');
     }
     const row = Array.isArray(data) ? data[0] : data;
+    if (row?.liked) {
+      void sendNotification('like', { userId: auth.userId, postId });
+    }
     return successResponse({ liked: row?.liked, like_count: row?.like_count ?? 0 });
   }
 
@@ -69,6 +73,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     await client.query("COMMIT");
 
     const { rows } = await client.query(`SELECT like_count FROM posts WHERE id=$1`, [postId]);
+    if (liked) {
+      void sendNotification('like', { userId: auth.userId, postId });
+    }
     return successResponse({ liked, like_count: rows[0]?.like_count ?? 0 });
   } catch (e) {
     await client.query("ROLLBACK");
