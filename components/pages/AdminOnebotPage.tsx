@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback, KeyboardEvent } from "react";
 import AdminLayout from "@/components/pages/AdminLayout";
-import { Bot, Loader2, Save, Send, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
+import {
+  Bot, Loader2, Save, Send, ToggleLeft, ToggleRight, Plus, X,
+} from "lucide-react";
 
 interface OnebotConfig {
   enabled: boolean;
@@ -35,12 +37,10 @@ function fromTags(arr: string[]): string {
   return arr.join(",");
 }
 
-// ── Tag 输入组件 ────────────────────────────────────────────
+// ── Tag 输入 ───────────────────────────────────────────────
 function TagInput({
-  label, description, placeholder, tags, onAdd, onRemove,
+  placeholder, tags, onAdd, onRemove,
 }: {
-  label: string;
-  description?: string;
   placeholder?: string;
   tags: string[];
   onAdd: (v: string) => void;
@@ -61,27 +61,23 @@ function TagInput({
   }
 
   return (
-    <div style={{ marginBottom: 18 }}>
-      <label className="admin-form-label">{label}</label>
-      {description && (
-        <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "2px 0 8px" }}>{description}</p>
-      )}
+    <div>
       {tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
           {tags.map(t => (
             <span key={t} style={{
-              display: "inline-flex", alignItems: "center", gap: 4,
-              padding: "3px 8px 3px 10px",
-              background: "rgba(212, 92, 128, 0.12)",
-              border: "1px solid rgba(212, 92, 128, 0.3)",
-              borderRadius: "var(--radius-full)",
-              fontSize: 12.5, color: "var(--pk-600)",
+              display: "inline-flex", alignItems: "center", gap: 3,
+              padding: "2px 8px 2px 10px",
+              background: "rgba(212,92,128,0.10)",
+              border: "1px solid rgba(212,92,128,0.28)",
+              borderRadius: 999,
+              fontSize: 12, color: "var(--pk-600)",
               fontVariantNumeric: "tabular-nums",
             }}>
               {t}
               <button type="button" onClick={() => onRemove(t)}
-                style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", color: "var(--pk-500)" }}>
-                <X size={11} />
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0 2px", display: "flex", alignItems: "center", color: "var(--pk-400)", lineHeight: 1 }}>
+                <X size={10} />
               </button>
             </span>
           ))}
@@ -97,53 +93,45 @@ function TagInput({
           inputMode="numeric"
           style={{ flex: 1, minWidth: 0 }}
         />
-        <button type="button" className="admin-btn admin-btn--secondary" onClick={tryAdd}
-          disabled={!input.trim()}
-          style={{ flexShrink: 0, padding: "0 14px", display: "flex", alignItems: "center", gap: 4 }}>
-          <Plus size={13} /> 添加
+        <button type="button" className="admin-btn admin-btn--ghost" onClick={tryAdd}
+          disabled={!input.trim() || !/^\d+$/.test(input.trim())}
+          style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
+          <Plus size={13} strokeWidth={1.8} />添加
         </button>
       </div>
       {input.trim() && !/^\d+$/.test(input.trim()) && (
-        <p style={{ fontSize: 11.5, color: "#c0392b", marginTop: 4 }}>只能输入纯数字</p>
+        <p style={{ fontSize: 11.5, color: "#c0392b", margin: "4px 0 0" }}>只能输入纯数字</p>
       )}
     </div>
   );
 }
 
-// ── 开关组件 ────────────────────────────────────────────────
-function Toggle({
-  label, description, value, onChange,
+// ── 内联开关行 ─────────────────────────────────────────────
+function SwitchRow({
+  label, description, value, onChange, noBorder,
 }: {
   label: string;
   description?: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  noBorder?: boolean;
 }) {
   return (
     <div style={{
-      display: "flex", alignItems: "flex-start", gap: 12,
-      padding: "12px 0", borderBottom: "1px solid var(--border-soft)",
+      display: "flex", alignItems: "center", gap: 12,
+      padding: "11px 0",
+      borderBottom: noBorder ? "none" : "1px solid var(--border-soft)",
     }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text-base)" }}>{label}</div>
-        {description && <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{description}</div>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text)" }}>{label}</div>
+        {description && <div style={{ fontSize: 12, color: "var(--muted-deep)", marginTop: 1 }}>{description}</div>}
       </div>
       <button type="button" onClick={() => onChange(!value)}
-        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: value ? "var(--pk-500)" : "var(--text-muted)", flexShrink: 0 }}
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, lineHeight: 1, color: value ? "#c0446a" : "var(--muted)" }}
         aria-label={label}>
-        {value ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
+        {value ? <ToggleRight size={26} /> : <ToggleLeft size={26} />}
       </button>
     </div>
-  );
-}
-
-// ── 状态提示 ──────────────────────────────────────────────
-function StatusMsg({ msg }: { msg: { ok: boolean; text: string } | null }) {
-  if (!msg) return null;
-  return (
-    <span style={{ fontSize: 13, color: msg.ok ? "#27ae60" : "#c0392b" }}>
-      {msg.ok ? "✅ " : "❌ "}{msg.text}
-    </span>
   );
 }
 
@@ -181,8 +169,7 @@ export default function AdminOnebotPage() {
   }
 
   async function handleSave() {
-    setSaving(true);
-    setSaveMsg(null);
+    setSaving(true); setSaveMsg(null);
     try {
       const payload = { ...form, target_qq: fromTags(qqTags), target_group: fromTags(groupTags) };
       const res = await fetch("/api/admin/onebot", {
@@ -195,9 +182,7 @@ export default function AdminOnebotPage() {
         setSaveMsg({ ok: true, text: "配置已保存" });
         if (json.data) {
           const cfg: OnebotConfig = { ...DEFAULT_CONFIG, ...json.data };
-          setForm(cfg);
-          setQqTags(toTags(cfg.target_qq));
-          setGroupTags(toTags(cfg.target_group));
+          setForm(cfg); setQqTags(toTags(cfg.target_qq)); setGroupTags(toTags(cfg.target_group));
         }
       } else {
         setSaveMsg({ ok: false, text: json.message ?? "保存失败" });
@@ -210,8 +195,7 @@ export default function AdminOnebotPage() {
   }
 
   async function handleTest() {
-    setTesting(true);
-    setTestMsg(null);
+    setTesting(true); setTestMsg(null);
     try {
       const res = await fetch("/api/admin/onebot", {
         method: "POST",
@@ -232,162 +216,191 @@ export default function AdminOnebotPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <AdminLayout title="OneBot 推送">
-        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-          <Loader2 size={24} className="admin-upload-spin" />
-        </div>
-      </AdminLayout>
-    );
-  }
-
   return (
     <AdminLayout title="OneBot 推送">
-      <div className="admin-page-header">
-        <Bot size={20} strokeWidth={1.8} />
-        <h1 className="admin-page-title">OneBot 推送配置</h1>
-      </div>
-
-      <div style={{ display: "grid", gap: 16, maxWidth: 680 }}>
-
-        {/* ── 基础配置 ─────────────────────────────── */}
-        <section className="admin-card">
-          <div className="admin-card-title" style={{ marginBottom: 4 }}>基础配置</div>
-
-          <Toggle
-            label="启用 OneBot 推送"
-            description="关闭后所有通知将静默，不影响业务功能"
-            value={form.enabled}
-            onChange={v => set("enabled", v)}
-          />
-
-          <div style={{ marginTop: 16 }}>
-            <label className="admin-form-label">OneBot HTTP 地址 *</label>
-            <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "2px 0 8px" }}>
-              OneBot 实现的 HTTP 正向监听地址，如 http://127.0.0.1:3000
-            </p>
-            <input
-              className="admin-input"
-              type="url"
-              value={form.http_url}
-              onChange={e => set("http_url", e.target.value)}
-              placeholder="http://127.0.0.1:3000"
-              style={{ width: "100%", boxSizing: "border-box" }}
-            />
+      {/* ── 说明卡片 ── */}
+      <div className="admin-panel" style={{ marginBottom: 16, padding: "12px 16px", background: "var(--rose-50, #fff5f7)" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <Bot size={15} style={{ marginTop: 2, flexShrink: 0, color: "var(--muted-deep)" }} strokeWidth={1.8} />
+          <div style={{ fontSize: 13, color: "var(--muted-deep)", lineHeight: 1.7 }}>
+            <strong style={{ color: "var(--text)" }}>OneBot 推送配置</strong>
+            <br />
+            通过 OneBot HTTP 正向接口向 QQ 私聊或群推送站点通知，包括新点赞、新评论、新帖子和邮件用量预警。<br />
+            需要在 OneBot 实现（如 NapCat、LLOneBot）中开启 <strong>HTTP 正向监听</strong>，而非 WebSocket 模式。
           </div>
-
-          <div style={{ marginTop: 14 }}>
-            <label className="admin-form-label">Access Token</label>
-            <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "2px 0 8px" }}>
-              OneBot 配置的 access_token，留空则不鉴权
-            </p>
-            <input
-              className="admin-input"
-              type="password"
-              value={form.access_token}
-              onChange={e => set("access_token", e.target.value)}
-              placeholder="留空则不使用"
-              autoComplete="new-password"
-              style={{ width: "100%", boxSizing: "border-box" }}
-            />
-          </div>
-        </section>
-
-        {/* ── 推送目标 ─────────────────────────────── */}
-        <section className="admin-card">
-          <div className="admin-card-title" style={{ marginBottom: 12 }}>推送目标</div>
-
-          <TagInput
-            label="私聊目标 QQ 号"
-            description="输入 QQ 号后按 Enter 或点击添加，可添加多个"
-            placeholder="输入 QQ 号，如 123456789"
-            tags={qqTags}
-            onAdd={v => setQqTags(t => [...t, v])}
-            onRemove={v => setQqTags(t => t.filter(x => x !== v))}
-          />
-
-          <TagInput
-            label="目标群号"
-            description="输入群号后按 Enter 或点击添加，可添加多个"
-            placeholder="输入群号，如 987654321"
-            tags={groupTags}
-            onAdd={v => setGroupTags(t => [...t, v])}
-            onRemove={v => setGroupTags(t => t.filter(x => x !== v))}
-          />
-
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, paddingTop: 4 }}>
-            <button
-              className="admin-btn admin-btn--secondary"
-              onClick={handleTest}
-              disabled={testing || !form.http_url}
-              style={{ minWidth: 130, display: "flex", alignItems: "center", gap: 6 }}
-            >
-              {testing ? <Loader2 size={13} className="admin-upload-spin" /> : <Send size={13} />}
-              {testing ? "发送中…" : "发送测试消息"}
-            </button>
-            <StatusMsg msg={testMsg} />
-          </div>
-        </section>
-
-        {/* ── 通知开关 ─────────────────────────────── */}
-        <section className="admin-card">
-          <div className="admin-card-title" style={{ marginBottom: 4 }}>事件通知开关</div>
-
-          <Toggle
-            label="新增点赞通知"
-            description="有用户点赞帖子时发送通知（取消点赞不通知）"
-            value={form.notify_on_like}
-            onChange={v => set("notify_on_like", v)}
-          />
-          <Toggle
-            label="新评论通知"
-            description="有用户发表评论时发送通知"
-            value={form.notify_on_comment}
-            onChange={v => set("notify_on_comment", v)}
-          />
-          <Toggle
-            label="新帖子通知"
-            description="有管理员发布新帖子时发送通知"
-            value={form.notify_on_post}
-            onChange={v => set("notify_on_post", v)}
-          />
-
-          <div style={{ marginTop: 16 }}>
-            <label className="admin-form-label">邮件发送量预警阈值</label>
-            <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "2px 0 8px" }}>
-              当天邮件发送量超过此值时发送预警通知，设为 0 则不启用
-            </p>
-            <input
-              className="admin-input"
-              type="number"
-              min={0}
-              value={form.email_threshold}
-              onChange={e => set("email_threshold", parseInt(e.target.value) || 0)}
-              placeholder="0（不启用）"
-              style={{ width: 140 }}
-            />
-          </div>
-        </section>
-
-        {/* ── 保存区域 ─────────────────────────────── */}
-        <div style={{
-          display: "flex", flexWrap: "wrap",
-          alignItems: "center", gap: 10, justifyContent: "flex-end",
-          paddingBottom: 24,
-        }}>
-          <StatusMsg msg={saveMsg} />
-          <button
-            className="admin-btn admin-btn--primary"
-            onClick={handleSave}
-            disabled={saving}
-            style={{ minWidth: 100, display: "flex", alignItems: "center", gap: 6 }}
-          >
-            {saving ? <Loader2 size={13} className="admin-upload-spin" /> : <Save size={13} />}
-            {saving ? "保存中…" : "保存配置"}
-          </button>
         </div>
       </div>
+
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
+          <Loader2 size={20} className="admin-upload-spin" style={{ opacity: 0.4 }} />
+        </div>
+      ) : (
+        <>
+          {/* ── 基础配置 ── */}
+          <div className="admin-panel" style={{ marginBottom: 16 }}>
+            <h2 className="admin-panel-title">
+              <Bot size={14} strokeWidth={1.8} />基础配置
+            </h2>
+
+            <SwitchRow
+              label="启用 OneBot 推送"
+              description="关闭后所有通知将静默，不影响业务功能"
+              value={form.enabled}
+              onChange={v => set("enabled", v)}
+            />
+
+            <div className="admin-form-row" style={{ marginTop: 12 }}>
+              <label className="admin-form-label">
+                OneBot HTTP 地址 *
+                <span style={{ fontWeight: 400, color: "var(--muted-deep)", fontSize: 11.5, marginLeft: 6 }}>
+                  HTTP 正向监听地址，如 http://127.0.0.1:3000
+                </span>
+              </label>
+              <input
+                className="admin-input"
+                type="url"
+                value={form.http_url}
+                onChange={e => { set("http_url", e.target.value); setTestMsg(null); }}
+                placeholder="http://127.0.0.1:3000"
+              />
+            </div>
+
+            <div className="admin-form-row">
+              <label className="admin-form-label">
+                Access Token
+                <span style={{ fontWeight: 400, color: "var(--muted-deep)", fontSize: 11.5, marginLeft: 6 }}>
+                  留空则不鉴权
+                </span>
+              </label>
+              <input
+                className="admin-input"
+                type="password"
+                value={form.access_token}
+                onChange={e => set("access_token", e.target.value)}
+                placeholder="留空则不使用"
+                autoComplete="new-password"
+              />
+            </div>
+          </div>
+
+          {/* ── 推送目标 ── */}
+          <div className="admin-panel" style={{ marginBottom: 16 }}>
+            <h2 className="admin-panel-title">
+              <Send size={14} strokeWidth={1.8} />推送目标
+            </h2>
+
+            <div className="admin-form-row">
+              <label className="admin-form-label">
+                私聊目标 QQ 号
+                <span style={{ fontWeight: 400, color: "var(--muted-deep)", fontSize: 11.5, marginLeft: 6 }}>
+                  按 Enter 或点击添加，支持多个
+                </span>
+              </label>
+              <TagInput
+                placeholder="输入 QQ 号，如 123456789"
+                tags={qqTags}
+                onAdd={v => { setQqTags(t => [...t, v]); setTestMsg(null); }}
+                onRemove={v => { setQqTags(t => t.filter(x => x !== v)); setTestMsg(null); }}
+              />
+            </div>
+
+            <div className="admin-form-row">
+              <label className="admin-form-label">
+                目标群号
+                <span style={{ fontWeight: 400, color: "var(--muted-deep)", fontSize: 11.5, marginLeft: 6 }}>
+                  按 Enter 或点击添加，支持多个
+                </span>
+              </label>
+              <TagInput
+                placeholder="输入群号，如 987654321"
+                tags={groupTags}
+                onAdd={v => { setGroupTags(t => [...t, v]); setTestMsg(null); }}
+                onRemove={v => { setGroupTags(t => t.filter(x => x !== v)); setTestMsg(null); }}
+              />
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, paddingTop: 4 }}>
+              <button
+                className="admin-btn admin-btn--ghost"
+                onClick={handleTest}
+                disabled={testing || !form.http_url}
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+              >
+                {testing ? <Loader2 size={13} className="admin-upload-spin" /> : <Send size={13} strokeWidth={1.8} />}
+                {testing ? "发送中…" : "发送测试消息"}
+              </button>
+              {testMsg && (
+                <span style={{ fontSize: 13, color: testMsg.ok ? "#27ae60" : "#c0392b" }}>
+                  {testMsg.ok ? "✅ " : "❌ "}{testMsg.text}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* ── 事件通知开关 ── */}
+          <div className="admin-panel" style={{ marginBottom: 16 }}>
+            <h2 className="admin-panel-title" style={{ marginBottom: 0 }}>
+              <Bot size={14} strokeWidth={1.8} />事件通知开关
+            </h2>
+
+            <SwitchRow
+              label="新增点赞通知"
+              description="有用户点赞帖子时发送通知（取消点赞不通知）"
+              value={form.notify_on_like}
+              onChange={v => set("notify_on_like", v)}
+            />
+            <SwitchRow
+              label="新评论通知"
+              description="有用户发表评论时发送通知"
+              value={form.notify_on_comment}
+              onChange={v => set("notify_on_comment", v)}
+            />
+            <SwitchRow
+              label="新帖子通知"
+              description="有管理员发布新帖子时发送通知"
+              value={form.notify_on_post}
+              onChange={v => set("notify_on_post", v)}
+            />
+
+            <div className="admin-form-row" style={{ marginTop: 12 }}>
+              <label className="admin-form-label">
+                邮件发送量预警阈值
+                <span style={{ fontWeight: 400, color: "var(--muted-deep)", fontSize: 11.5, marginLeft: 6 }}>
+                  当天累计发送量达到此值时推送预警，设为 0 则不启用
+                </span>
+              </label>
+              <input
+                className="admin-input"
+                type="number"
+                min={0}
+                value={form.email_threshold}
+                onChange={e => set("email_threshold", parseInt(e.target.value) || 0)}
+                placeholder="0（不启用）"
+                style={{ maxWidth: 140 }}
+              />
+            </div>
+          </div>
+
+          {/* ── 保存栏 ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end", paddingBottom: 24 }}>
+            {saveMsg && (
+              <span style={{ fontSize: 13, color: saveMsg.ok ? "#27ae60" : "#c0392b" }}>
+                {saveMsg.ok ? "✅ " : "❌ "}{saveMsg.text}
+              </span>
+            )}
+            <button
+              className="admin-btn admin-btn--primary"
+              onClick={handleSave}
+              disabled={saving}
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              {saving ? <Loader2 size={13} className="admin-upload-spin" /> : <Save size={13} strokeWidth={1.8} />}
+              {saving ? "保存中…" : "保存配置"}
+            </button>
+          </div>
+        </>
+      )}
     </AdminLayout>
   );
 }
