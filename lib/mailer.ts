@@ -4,6 +4,10 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import pool from './db';
 import { getSetting } from './site-settings';
+import { getRedis, REDIS_TYPE } from './redis';
+import Redis from 'ioredis';
+import { Redis as UpstashRedis } from '@upstash/redis';
+import { sendNotification, getOnebotConfig } from './onebot';
 
 export interface EmailAccount {
   id: number;
@@ -141,10 +145,51 @@ export async function sendOtpMail(
 
   try {
     await sendMail(account, to, subject, html);
+    // 邮件发送计数 + 阈值啄醒
+    void trackEmailAndNotify();
     return { success: true, message: '验证码已发送' };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[Mailer] send error:', msg);
     return { success: false, message: `邮件发送失败：${msg}` };
+  }
+}
+
+// ─── 邮件发送量统计 + 阈值通知 ───────────────────────────────────────────────────
+
+const EMAIL_COUNT_KEY = 'email:daily:count';
+
+async function trackEmailAndNotify(): Promise<void> {
+  try {
+    const redis = getRedis();
+
+    // 当天 00:00 到明天 00:00 的秒数（用于设置 TTL）
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const ttl = Math.ceil((midnight.getTime() - now.getTime()) / 1000);
+
+    let count: number;
+
+    if (REDIS_TYPE === 'upstash') {
+      const r = redis as UpstashRedis;
+      count = await r.incr(EMAIL_COUNT_KEY);
+      if (count === 1) await r.expire(EMAIL_COUNT_KEY, ttl);
+    } else {
+      const r = redis as Redis;
+      count = await r.incr(EMAIL_COUNT_KEY);
+      if (count === 1) await r.expire(EMAIL_COUNT_KEY, ttl);
+    }
+
+    // 检查阈值
+    const cfg = await getOnebotConfig();
+    if (cfg && cfg.enabled && cfg.email_threshold > 0 && count >= cfg.email_threshold) {
+      // 仅在恰好越过阈值时发一次，避免每封都通知
+      if (count === cfg.email_threshold) {
+        void sendNotification('email_threshold', { count, threshold: cfg.email_threshold });
+      }
+    }
+  } catch (e) {
+    console.error('[Mailer] trackEmailAndNotify error:', e);
   }
 }
