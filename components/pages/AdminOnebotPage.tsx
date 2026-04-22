@@ -491,17 +491,6 @@ function Toggle({
   );
 }
 
-// ── 通知状态提示 ──────────────────────────────────────
-function StatusMsg({ msg }: { msg: { ok: boolean; text: string } | null }) {
-  if (!msg) return null;
-  return (
-    <span style={{ fontSize: 13, color: msg.ok ? "#27ae60" : "#c0392b" }}>
-      {msg.ok ? "✅ " : "❌ "}{msg.text}
-    </span>
-  );
-}
-
-export default function AdminOnebotPage() {
   const [form, setForm] = useState<OnebotConfig>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
