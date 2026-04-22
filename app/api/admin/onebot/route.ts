@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
 
   const result = await sendTestNotification(testCfg);
   if (!result.ok) {
-    return errorResponse(ResultCode.SERVER_ERROR, result.error ?? '发送失败');
+    return errorResponse(ResultCode.UPSTREAM_ERROR, result.error ?? '发送失败');
   }
   return successResponse(null, '测试消息已发送');
 }
