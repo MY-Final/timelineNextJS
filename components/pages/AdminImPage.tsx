@@ -367,19 +367,49 @@ export default function AdminImPage() {
     );
   }
 
+  function renderActiveProviderHeader(type: ImProviderType) {
+    const item = type === "onebot" ? onebot : gotify;
+    const meta = PROVIDER_META[type];
+    const Icon = meta.icon;
+
+    return (
+      <div className="admin-panel" style={{ margin: 0, padding: "16px 18px" }}>
+        <div className="admin-im-active-header">
+          <div className="admin-im-active-meta">
+            <span className="admin-im-active-icon" style={{ background: meta.accent }}>
+              <Icon size={16} strokeWidth={1.8} />
+            </span>
+            <div>
+              <div className="admin-im-active-title-row">
+                <strong>{meta.title}</strong>
+                <span className={`admin-im-switcher-badge${item.enabled ? " is-enabled" : ""}`}>
+                  {item.enabled ? "当前启用" : "当前未启用"}
+                </span>
+              </div>
+              <div className="admin-im-active-desc">启用后会自动禁用其他 IM 渠道，业务通知会统一走当前渠道发送。</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={`admin-im-enable-btn${item.enabled ? " is-enabled" : ""}`}
+            onClick={() => setBase(type, "enabled", !item.enabled)}
+          >
+            {item.enabled ? <ToggleRight size={26} /> : <ToggleLeft size={26} />}
+            <span>{item.enabled ? "已启用" : "点击启用"}</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   function renderOnebotSection() {
     const config = onebot.config as OnebotFields;
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {renderActiveProviderHeader("onebot")}
         <div className="admin-panel" style={{ margin: 0 }}>
           <h2 className="admin-panel-title"><Bot size={14} strokeWidth={1.8} />基础配置</h2>
-          <SwitchRow
-            label="启用 OneBot 推送"
-            description="启用后会自动禁用其他 IM 渠道"
-            value={onebot.enabled}
-            onChange={v => setBase("onebot", "enabled", v)}
-          />
-          <div className="admin-form-row" style={{ marginTop: 12 }}>
+          <div className="admin-form-row">
             <label className="admin-form-label">OneBot HTTP 地址 *</label>
             <input className="admin-input" type="url" value={config.http_url} onChange={e => setConfig("onebot", "http_url", e.target.value)} placeholder="http://127.0.0.1:3000" />
           </div>
@@ -426,15 +456,10 @@ export default function AdminImPage() {
     const config = gotify.config as GotifyFields;
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {renderActiveProviderHeader("gotify")}
         <div className="admin-panel" style={{ margin: 0 }}>
           <h2 className="admin-panel-title"><Smartphone size={14} strokeWidth={1.8} />基础配置</h2>
-          <SwitchRow
-            label="启用 Gotify 推送"
-            description="启用后会自动禁用其他 IM 渠道"
-            value={gotify.enabled}
-            onChange={v => setBase("gotify", "enabled", v)}
-          />
-          <div className="admin-form-row" style={{ marginTop: 12 }}>
+          <div className="admin-form-row">
             <label className="admin-form-label">Gotify 服务地址 *</label>
             <input className="admin-input" type="url" value={config.server_url} onChange={e => setGotifyConfig("server_url", e.target.value)} placeholder="https://push.example.com" />
           </div>
