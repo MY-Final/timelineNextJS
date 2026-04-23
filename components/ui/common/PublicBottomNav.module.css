@@ -1,0 +1,111 @@
+/* PublicBottomNav.module.css — Mobile bottom navigation bar */
+
+.nav {
+  display: none; /* Hidden on desktop */
+}
+
+@media (max-width: 768px) {
+  .nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    justify-content: space-around;
+    align-items: center;
+    padding: 6px 0;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 248, 251, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(200, 130, 160, 0.25);
+    box-shadow: 0 -4px 24px rgba(180, 60, 90, 0.06);
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ── Tab item ── */
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 64px;
+  min-height: 48px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--muted-darker, #9a6075);
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab:active {
+  transform: scale(0.95);
+}
+
+/* ── Icon wrapper ── */
+.iconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+/* ── Active indicator dot ── */
+.indicator {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--rose-400, #f43f5e);
+}
+
+/* ── Label ── */
+.label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+/* ── Active state ── */
+.active {
+  color: var(--rose-500, #e11d48);
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+  @media (max-width: 768px) {
+    .nav {
+      background: rgba(20, 10, 16, 0.90);
+      border-top-color: rgba(159, 18, 57, 0.30);
+    }
+    .tab {
+      color: #8a5068;
+    }
+    .active {
+      color: var(--rose-300, #fb7185);
+    }
+    .indicator {
+      background: var(--rose-300, #fb7185);
+    }
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+  .tab:active {
+    transform: none;
+  }
+}
