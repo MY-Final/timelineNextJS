@@ -20,6 +20,7 @@ import {
   Bot,
 } from "lucide-react";
 import "@/styles/Admin.css";
+import AdminBottomNav from "@/components/ui/common/AdminBottomNav";
 
 interface NavItem {
   label: string;
@@ -193,6 +194,8 @@ export default function AdminLayout({ children, title = "控制台" }: AdminLayo
         </header>
         <main className="admin-content">{children}</main>
       </div>
+
+      <AdminBottomNav />
     </div>
   );
 }
