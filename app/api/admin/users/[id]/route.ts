@@ -115,8 +115,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return errorResponse(ResultCode.BAD_REQUEST, '请求体格式错误');
   }
 
-  const client = DB_TYPE !== 'supabase' ? await pool.connect() : null;
+  let client = null;
   try {
+    if (DB_TYPE !== 'supabase') client = await pool.connect();
     let existingRole: string;
     if (DB_TYPE === 'supabase') {
       const supabase = getSupabaseClient();

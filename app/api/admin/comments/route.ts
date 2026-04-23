@@ -21,8 +21,10 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status") ?? ""; // visible | hidden | deleted | '' (all)
   const postId = searchParams.get("post_id") ? parseInt(searchParams.get("post_id")!) : null;
 
-  const client = DB_TYPE !== 'supabase' ? await pool.connect() : null;
+  let client = null;
   try {
+    if (DB_TYPE !== 'supabase') client = await pool.connect();
+
     if (DB_TYPE === 'supabase') {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase.rpc('get_admin_comments', {
@@ -84,8 +86,9 @@ export async function GET(request: NextRequest) {
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
     console.error("[GET /api/admin/comments]", e);
-    return errorResponse(ResultCode.DB_ERROR, "查询失败");
+    return errorResponse(ResultCode.DB_ERROR, `查询失败: ${msg}`);
   } finally {
     client?.release();
   }
