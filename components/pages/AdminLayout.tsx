@@ -37,8 +37,9 @@ const NAV_ITEMS: NavItemExt[] = [
   { label: "评论管理", href: "/admin/comments", icon: <MessageSquare size={16} strokeWidth={1.8} /> },
   { label: "用户管理", href: "/admin/users", icon: <Users size={16} strokeWidth={1.8} /> },
   { label: "SMTP 邮箱", href: "/admin/smtp", icon: <Mail size={16} strokeWidth={1.8} />, roles: ["superadmin"] },
-  { label: "OneBot 推送", href: "/admin/onebot", icon: <Bot size={16} strokeWidth={1.8} />, roles: ["superadmin"] },
-  { label: "系统设置", href: "/admin/settings", icon: <Settings size={16} strokeWidth={1.8} />, roles: ["superadmin"] },];
+  { label: "IM通知", href: "/admin/im", icon: <Bot size={16} strokeWidth={1.8} />, roles: ["superadmin"] },
+  { label: "系统设置", href: "/admin/settings", icon: <Settings size={16} strokeWidth={1.8} />, roles: ["superadmin"] },
+];
 
 const BREADCRUMB_MAP: Record<string, string[]> = {
   "/admin": ["控制台"],
@@ -47,8 +48,9 @@ const BREADCRUMB_MAP: Record<string, string[]> = {
   "/admin/comments": ["控制台", "评论管理"],
   "/admin/users": ["控制台", "用户管理"],
   "/admin/smtp": ["控制台", "SMTP 邮箱"],
-  "/admin/onebot": ["控制台", "OneBot 推送"],
-  "/admin/settings": ["控制台", "系统设置"],};
+  "/admin/im": ["控制台", "IM通知"],
+  "/admin/settings": ["控制台", "系统设置"],
+};
 
 interface AdminLayoutProps {
   children: React.ReactNode;
