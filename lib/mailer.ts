@@ -7,7 +7,7 @@ import { getSetting } from './site-settings';
 import { getRedis, REDIS_TYPE } from './redis';
 import Redis from 'ioredis';
 import { Redis as UpstashRedis } from '@upstash/redis';
-import { sendNotification, getOnebotConfig } from './onebot';
+import { sendImNotification, getEnabledImConfig } from './im';
 
 export interface EmailAccount {
   id: number;
@@ -182,11 +182,10 @@ async function trackEmailAndNotify(): Promise<void> {
     }
 
     // 检查阈值
-    const cfg = await getOnebotConfig();
+    const cfg = await getEnabledImConfig();
     if (cfg && cfg.enabled && cfg.email_threshold > 0 && count >= cfg.email_threshold) {
-      // 仅在恰好越过阈值时发一次，避免每封都通知
       if (count === cfg.email_threshold) {
-        void sendNotification('email_threshold', { count, threshold: cfg.email_threshold });
+        void sendImNotification('email_threshold', { count, threshold: cfg.email_threshold });
       }
     }
   } catch (e) {
