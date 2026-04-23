@@ -416,7 +416,7 @@ export default function AdminImPage() {
             />
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, paddingTop: 4 }}>
-            <button className="admin-btn admin-btn--ghost" onClick={() => handleTest("onebot")} disabled={testing === "onebot" || !config.http_url} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button className="admin-btn admin-btn--ghost" onClick={() => handleTest("onebot")} disabled={testing === "onebot" || !config.http_url} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 18px", fontSize: 13.5 }}>
               {testing === "onebot" ? <Loader2 size={13} className="admin-upload-spin" /> : <Send size={13} strokeWidth={1.8} />}
               {testing === "onebot" ? "发送中…" : "发送测试消息"}
             </button>
@@ -447,7 +447,7 @@ export default function AdminImPage() {
             <input className="admin-input" type="number" min={0} max={10} value={config.priority} onChange={e => setGotifyConfig("priority", parseInt(e.target.value, 10) || 0)} style={{ maxWidth: 140 }} />
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, paddingTop: 4 }}>
-            <button className="admin-btn admin-btn--ghost" onClick={() => handleTest("gotify")} disabled={testing === "gotify" || !config.server_url || !config.app_token} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button className="admin-btn admin-btn--ghost" onClick={() => handleTest("gotify")} disabled={testing === "gotify" || !config.server_url || !config.app_token} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 18px", fontSize: 13.5 }}>
               {testing === "gotify" ? <Loader2 size={13} className="admin-upload-spin" /> : <Send size={13} strokeWidth={1.8} />}
               {testing === "gotify" ? "发送中…" : "发送测试消息"}
             </button>
@@ -487,7 +487,7 @@ export default function AdminImPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end", marginTop: 18 }}>
             {saveMsg && <span style={{ fontSize: 13, color: saveMsg.ok ? "#27ae60" : "#c0392b" }}>{saveMsg.ok ? "✅ " : "❌ "}{saveMsg.text}</span>}
             {testMsg && <span style={{ fontSize: 13, color: testMsg.ok ? "#27ae60" : "#c0392b" }}>{testMsg.ok ? "✅ " : "❌ "}{testMsg.text}</span>}
-            <button className="admin-btn admin-btn--primary" onClick={() => handleSave(type)} disabled={saving === type} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button className="admin-btn admin-btn--primary" onClick={() => handleSave(type)} disabled={saving === type} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 22px", fontSize: 14 }}>
               {saving === type ? <Loader2 size={13} className="admin-upload-spin" /> : <Save size={13} strokeWidth={1.8} />}
               {saving === type ? "保存中…" : "保存配置"}
             </button>
@@ -505,7 +505,7 @@ export default function AdminImPage() {
           <div style={{ fontSize: 13, color: "var(--muted-deep)", lineHeight: 1.7 }}>
             <strong style={{ color: "var(--text)" }}>IM 通知中心</strong>
             <br />
-            所有即时通知渠道都集中在这里管理。顶部切换当前渠道，下方只显示当前渠道配置；同一时间只会启用一个渠道。
+            所有即时通知渠道都集中在这里管理。顶部切换当前渠道，下方只显示当前渠道配置；多个渠道可以同时启用，通知将并行发送到所有已启用渠道。
           </div>
         </div>
       </div>

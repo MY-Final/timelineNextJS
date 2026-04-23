@@ -272,6 +272,11 @@ export async function getEnabledImConfig(): Promise<ImConfig | null> {
   return items.find(item => item.enabled) ?? null;
 }
 
+export async function getEnabledImConfigs(): Promise<ImConfig[]> {
+  const items = await getImConfigs();
+  return items.filter(item => item.enabled);
+}
+
 export async function getLegacyOnebotConfig(): Promise<OnebotConfig | null> {
   const active = await getEnabledImConfig();
   if (active?.type === 'onebot') {
@@ -344,15 +349,17 @@ export async function sendImNotification(
   payload: NotificationPayload
 ): Promise<void> {
   try {
-    const config = await getEnabledImConfig();
-    if (!config || !shouldSend(config, type)) return;
-
-    if (config.type === 'gotify') {
-      await sendGotifyMessage(config, type, payload);
-      return;
-    }
-
-    await sendOnebotMessage(toOnebotConfig(config), type, payload);
+    const configs = await getEnabledImConfigs();
+    await Promise.allSettled(
+      configs
+        .filter(config => shouldSend(config, type))
+        .map(config => {
+          if (config.type === 'gotify') {
+            return sendGotifyMessage(config, type, payload);
+          }
+          return sendOnebotMessage(toOnebotConfig(config), type, payload);
+        })
+    );
   } catch (error) {
     console.error('[IM] sendImNotification error:', error);
   }
@@ -393,14 +400,6 @@ export async function updateImConfig(input: UpdateImConfigInput): Promise<ImConf
   try {
     if (DB_TYPE === 'supabase') {
       const supabase = getSupabaseClient();
-      if (nextEnabled) {
-        const { error: disableError } = await supabase
-          .from('im_config')
-          .update({ enabled: false, updated_at: new Date().toISOString() })
-          .neq('type', type);
-        if (disableError) throw disableError;
-      }
-
       const { error } = await supabase
         .from('im_config')
         .update({
@@ -418,12 +417,6 @@ export async function updateImConfig(input: UpdateImConfigInput): Promise<ImConf
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        if (nextEnabled) {
-          await client.query(
-            'UPDATE im_config SET enabled = FALSE, updated_at = NOW() WHERE type <> $1',
-            [type]
-          );
-        }
         await client.query(
           `UPDATE im_config
            SET enabled = $1,
