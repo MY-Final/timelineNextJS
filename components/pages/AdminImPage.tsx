@@ -5,8 +5,6 @@ import AdminLayout from "@/components/pages/AdminLayout";
 import {
   BellRing,
   Bot,
-  ChevronDown,
-  ChevronUp,
   Loader2,
   Save,
   Send,
@@ -207,7 +205,7 @@ function SwitchRow({
   );
 }
 
-function defaultExpanded(items: ImConfig[], activeType: ImProviderType | null): ImProviderType {
+function defaultActiveType(items: ImConfig[], activeType: ImProviderType | null): ImProviderType {
   return activeType ?? items.find(item => item.enabled)?.type ?? items[0]?.type ?? "onebot";
 }
 
@@ -217,7 +215,7 @@ function getConfigItem<T extends ImProviderType>(items: ImConfig[], type: T): Im
 
 export default function AdminImPage() {
   const [items, setItems] = useState<ImConfig[]>(DEFAULT_ITEMS);
-  const [expanded, setExpanded] = useState<ImProviderType>("onebot");
+  const [activeType, setActiveType] = useState<ImProviderType>("onebot");
   const [qqTags, setQqTags] = useState<string[]>([]);
   const [groupTags, setGroupTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -235,7 +233,7 @@ export default function AdminImPage() {
         const data = json.data as ImResponse;
         const nextItems = data.items?.length ? data.items : DEFAULT_ITEMS;
         setItems(nextItems);
-        setExpanded(defaultExpanded(nextItems, data.activeType));
+        setActiveType(defaultActiveType(nextItems, data.activeType));
         const onebot = getConfigItem(nextItems, "onebot");
         setQqTags(toTags(onebot.config.http_url !== undefined ? onebot.config.target_qq : ""));
         setGroupTags(toTags(onebot.config.http_url !== undefined ? onebot.config.target_group : ""));
@@ -298,7 +296,7 @@ export default function AdminImPage() {
         const data = json.data as ImResponse;
         const nextItems = data.items?.length ? data.items : DEFAULT_ITEMS;
         setItems(nextItems);
-        setExpanded(defaultExpanded(nextItems, data.activeType));
+        setActiveType(defaultActiveType(nextItems, data.activeType));
         const nextOnebot = getConfigItem(nextItems, "onebot");
         setQqTags(toTags(nextOnebot.config.http_url !== undefined ? nextOnebot.config.target_qq : ""));
         setGroupTags(toTags(nextOnebot.config.http_url !== undefined ? nextOnebot.config.target_group : ""));
@@ -334,72 +332,37 @@ export default function AdminImPage() {
     }
   }
 
-  function renderProviderCard(type: ImProviderType) {
-    const item = type === "onebot" ? onebot : gotify;
-    const meta = PROVIDER_META[type];
-    const Icon = meta.icon;
-    const isExpanded = expanded === type;
-
+  function renderProviderSwitcher() {
     return (
-      <div key={type} className="admin-panel" style={{ padding: 0, overflow: "hidden" }}>
-        <button
-          type="button"
-          onClick={() => setExpanded(type)}
-          style={{
-            width: "100%",
-            background: "none",
-            border: "none",
-            padding: "18px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            cursor: "pointer",
-            textAlign: "left",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-            <div style={{
-              width: 42,
-              height: 42,
-              borderRadius: 14,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: meta.accent,
-              color: "var(--text)",
-              flexShrink: 0,
-            }}>
-              <Icon size={18} strokeWidth={1.8} />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <strong style={{ fontSize: 15, color: "var(--text)" }}>{meta.title}</strong>
-                <span style={{
-                  fontSize: 11.5,
-                  padding: "2px 8px",
-                  borderRadius: 999,
-                  border: `1px solid ${item.enabled ? "rgba(39,174,96,0.35)" : "rgba(120,120,120,0.2)"}`,
-                  background: item.enabled ? "rgba(39,174,96,0.08)" : "rgba(0,0,0,0.03)",
-                  color: item.enabled ? "#1f8f56" : "var(--muted-deep)",
-                }}>
-                  {item.enabled ? "已启用" : "未启用"}
-                </span>
-              </div>
-              <div style={{ fontSize: 12.5, color: "var(--muted-deep)", marginTop: 4 }}>{meta.description}</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-            <div style={{ fontSize: 12, color: "var(--muted-deep)" }}>{isExpanded ? "收起" : "展开"}</div>
-            {isExpanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
-          </div>
-        </button>
+      <div className="admin-im-switcher">
+        {(["onebot", "gotify"] as const).map((type) => {
+          const item = type === "onebot" ? onebot : gotify;
+          const meta = PROVIDER_META[type];
+          const Icon = meta.icon;
+          const isActive = activeType === type;
 
-        {isExpanded && (
-          <div style={{ borderTop: "1px solid var(--border-soft)", padding: 20 }}>
-            {type === "onebot" ? renderOnebotSection() : renderGotifySection()}
-          </div>
-        )}
+          return (
+            <button
+              key={type}
+              type="button"
+              className={`admin-im-switcher-item${isActive ? " is-active" : ""}`}
+              onClick={() => setActiveType(type)}
+            >
+              <span className="admin-im-switcher-icon" style={{ background: meta.accent }}>
+                <Icon size={16} strokeWidth={1.8} />
+              </span>
+              <span className="admin-im-switcher-content">
+                <span className="admin-im-switcher-topline">
+                  <strong>{meta.title}</strong>
+                  <span className={`admin-im-switcher-badge${item.enabled ? " is-enabled" : ""}`}>
+                    {item.enabled ? "已启用" : "未启用"}
+                  </span>
+                </span>
+                <span className="admin-im-switcher-description">{meta.description}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     );
   }
@@ -542,7 +505,7 @@ export default function AdminImPage() {
           <div style={{ fontSize: 13, color: "var(--muted-deep)", lineHeight: 1.7 }}>
             <strong style={{ color: "var(--text)" }}>IM 通知中心</strong>
             <br />
-            所有即时通知渠道都集中在这里管理。默认展开当前启用的渠道，切换卡片即可编辑其他渠道；同一时间只会启用一个渠道。
+            所有即时通知渠道都集中在这里管理。顶部切换当前渠道，下方只显示当前渠道配置；同一时间只会启用一个渠道。
           </div>
         </div>
       </div>
@@ -553,8 +516,8 @@ export default function AdminImPage() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {renderProviderCard("onebot")}
-          {renderProviderCard("gotify")}
+          {renderProviderSwitcher()}
+          {activeType === "onebot" ? renderOnebotSection() : renderGotifySection()}
         </div>
       )}
     </AdminLayout>
