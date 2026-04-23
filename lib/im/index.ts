@@ -112,12 +112,16 @@ export async function sendImNotification(
 ): Promise<void> {
   try {
     const configs = await getEnabledImConfigs();
+    const filtered = configs.filter(config => shouldSend(config, type));
+    if (filtered.length === 0) return;
+
+    // 渲染一次消息，所有渠道共用
+    const message = await buildNotificationMessage(type, payload);
+
     await Promise.allSettled(
-      configs
-        .filter(config => shouldSend(config, type))
-        .map(config => {
-          if (config.type === 'gotify') {
-            return sendGotifyMessage(config as GotifyImConfig, type, payload);
+      filtered.map(config => {
+        if (config.type === 'gotify') {
+          return sendGotifyMessage(config as GotifyImConfig, message);
           }
           return sendOnebotMessage(toOnebotConfig(config as OnebotImConfig), type, payload);
         })
@@ -138,7 +142,13 @@ export async function sendImTestNotification(
   input: SendImTestInput
 ): Promise<{ ok: boolean; error?: string }> {
   if (input.type === 'gotify') {
-    return sendGotifyTestNotification(normalizeGotifyConfig(input.config));
+    const config = normalizeGotifyConfig(input.config);
+    const message = await buildNotificationMessage('post', {
+      username: 'System',
+      postTitle: 'Gotify 测试消息',
+      postId: 'test',
+    });
+    return sendGotifyTestNotification(config, message);
   }
 
   return sendOnebotTestNotification({
