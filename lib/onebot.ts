@@ -5,6 +5,11 @@ import Redis from 'ioredis';
 import { Redis as UpstashRedis } from '@upstash/redis';
 import { getSetting } from './site-settings';
 
+// buildNotificationMessage 的实现已迁移至 lib/im/templates.ts
+// 这里保留 re-export 以兼容现有引用
+export { buildNotificationMessage } from './im/templates';
+import { buildNotificationMessage } from './im/templates';
+
 const CACHE_KEY = 'onebot:config';
 const CACHE_TTL = 300; // 5 分钟
 
@@ -146,27 +151,6 @@ function parseTargets(raw: string): string[] {
     .split(',')
     .map(s => s.trim())
     .filter(s => s.length > 0);
-}
-
-export async function buildNotificationMessage(
-  type: NotificationType,
-  payload: NotificationPayload
-): Promise<string> {
-  const siteName = await getSetting('site_name').catch(() => 'Our Story');
-  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-
-  switch (type) {
-    case 'like':
-      return `[${siteName}] 新点赞通知\n时间：${now}\n用户 ${payload.username ?? payload.userId} 赞了帖子「${payload.postTitle ?? payload.postId}」`;
-    case 'comment':
-      return `[${siteName}] 新评论通知\n时间：${now}\n用户 ${payload.username ?? payload.userId} 评论了帖子「${payload.postTitle ?? payload.postId}」：\n${payload.content ?? ''}`;
-    case 'post':
-      return `[${siteName}] 新帖子通知\n时间：${now}\n用户 ${payload.username ?? payload.userId} 发布了帖子「${payload.postTitle ?? payload.postId}」`;
-    case 'email_threshold':
-      return `[${siteName}] 邮件发送量预警\n时间：${now}\n今日邮件发送量已达 ${payload.count} 封，超过阈值 ${payload.threshold} 封`;
-    default:
-      return `[${siteName}] 系统通知\n时间：${now}`;
-  }
 }
 
 export async function sendOnebotMessage(
