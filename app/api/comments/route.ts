@@ -3,7 +3,7 @@ import pool, { DB_TYPE } from "@/lib/db";
 import { getSupabaseClient } from "@/lib/supabase";
 import { getAuthUser } from "@/lib/auth";
 import { ResultCode, successResponse, errorResponse } from "@/lib/result";
-import { sendNotification } from "@/lib/onebot";
+import { sendImNotification } from "@/lib/im";
 
 /**
  * @swagger
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
         reply_to_username: replyToUsername,
         reply_to_nickname: replyToNickname,
       };
-      void sendNotification('comment', {
+      void sendImNotification('comment', {
         userId: auth.userId,
         username: userRow?.nickname || userRow?.username,
         postId: post_id,
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
       if (rtuRows.length) { replyToUsername = rtuRows[0].username; replyToNickname = rtuRows[0].nickname; }
     }
     void comment;
-    void sendNotification('comment', {
+    void sendImNotification('comment', {
       userId: auth.userId,
       username: userRows[0]?.nickname || userRows[0]?.username,
       postId: post_id,

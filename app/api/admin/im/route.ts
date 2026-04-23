@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
 import {
-  getLegacyOnebotConfig,
   getDefaultImConfigListResponse,
   getImConfigListResponse,
+  parseImProviderType,
   sendImTestNotification,
   updateImConfig,
 } from '@/lib/im';
@@ -14,19 +14,13 @@ export async function GET(request: NextRequest) {
   if (auth instanceof Response) return auth;
   if (auth.role !== 'superadmin') return errorResponse(ResultCode.FORBIDDEN, '仅超级管理员可访问');
 
-  const cfg = await getLegacyOnebotConfig();
-  return successResponse(cfg ?? {
-    id: 1,
-    enabled: false,
-    http_url: '',
-    access_token: '',
-    target_qq: '',
-    target_group: '',
-    notify_on_like: true,
-    notify_on_comment: true,
-    notify_on_post: true,
-    email_threshold: 0,
-  });
+  try {
+    const data = await getImConfigListResponse();
+    return successResponse(data);
+  } catch (error) {
+    console.error('[GET /api/admin/im]', error);
+    return successResponse(getDefaultImConfigListResponse());
+  }
 }
 
 export async function PUT(request: NextRequest) {
@@ -41,48 +35,31 @@ export async function PUT(request: NextRequest) {
     return errorResponse(ResultCode.BAD_REQUEST, '请求体格式错误');
   }
 
+  const type = parseImProviderType(body.type);
+  if (!type) {
+    return errorResponse(ResultCode.BAD_REQUEST, 'type 必须为 onebot 或 gotify');
+  }
+
   if (body.email_threshold !== undefined) {
-    const n = Number(body.email_threshold);
-    if (!Number.isInteger(n) || n < 0) {
+    const threshold = Number(body.email_threshold);
+    if (!Number.isInteger(threshold) || threshold < 0) {
       return errorResponse(ResultCode.BAD_REQUEST, 'email_threshold 必须为非负整数');
     }
   }
 
   try {
     const data = await updateImConfig({
-      type: 'onebot',
+      type,
       enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
       notify_on_like: typeof body.notify_on_like === 'boolean' ? body.notify_on_like : undefined,
       notify_on_comment: typeof body.notify_on_comment === 'boolean' ? body.notify_on_comment : undefined,
       notify_on_post: typeof body.notify_on_post === 'boolean' ? body.notify_on_post : undefined,
       email_threshold: body.email_threshold === undefined ? undefined : Number(body.email_threshold),
-      config: {
-        http_url: body.http_url,
-        access_token: body.access_token,
-        target_qq: body.target_qq,
-        target_group: body.target_group,
-      },
+      config: typeof body.config === 'object' && body.config !== null ? body.config as Record<string, unknown> : undefined,
     });
-
-    const onebot = data.items.find(item => item.type === 'onebot');
-    if (!onebot || onebot.type !== 'onebot') {
-      return successResponse((await getLegacyOnebotConfig()) ?? getDefaultImConfigListResponse().items[0], '配置已保存');
-    }
-
-    return successResponse({
-      id: onebot.id || 1,
-      enabled: onebot.enabled,
-      http_url: onebot.config.http_url,
-      access_token: onebot.config.access_token,
-      target_qq: onebot.config.target_qq,
-      target_group: onebot.config.target_group,
-      notify_on_like: onebot.notify_on_like,
-      notify_on_comment: onebot.notify_on_comment,
-      notify_on_post: onebot.notify_on_post,
-      email_threshold: onebot.email_threshold,
-    }, '配置已保存');
+    return successResponse(data, '配置已保存');
   } catch (error) {
-    console.error('[PUT /api/admin/onebot]', error);
+    console.error('[PUT /api/admin/im]', error);
     return errorResponse(ResultCode.DB_ERROR, '保存失败');
   }
 }
@@ -99,17 +76,19 @@ export async function POST(request: NextRequest) {
     return errorResponse(ResultCode.BAD_REQUEST, '请求体格式错误');
   }
 
-  const result = await sendImTestNotification({
-    type: 'onebot',
-    config: {
-      http_url: body.http_url,
-      access_token: body.access_token,
-      target_qq: body.target_qq,
-      target_group: body.target_group,
-    },
-  });
+  const type = parseImProviderType(body.type);
+  if (!type) {
+    return errorResponse(ResultCode.BAD_REQUEST, 'type 必须为 onebot 或 gotify');
+  }
+
+  const config = typeof body.config === 'object' && body.config !== null
+    ? body.config as Record<string, unknown>
+    : {};
+
+  const result = await sendImTestNotification({ type, config });
   if (!result.ok) {
     return errorResponse(ResultCode.UPSTREAM_ERROR, result.error ?? '发送失败');
   }
+
   return successResponse(null, '测试消息已发送');
 }

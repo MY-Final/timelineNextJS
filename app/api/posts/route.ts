@@ -3,7 +3,7 @@ import pool, { DB_TYPE } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
 import { getAuthUser } from '@/lib/auth';
 import { ResultCode, successResponse, errorResponse } from '@/lib/result';
-import { sendNotification } from '@/lib/onebot';
+import { sendImNotification } from '@/lib/im';
 
 /**
  * @swagger
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
         p_images:     images,
       });
       if (error) throw error;
-      void sendNotification('post', { userId: authUser.userId, postId, postTitle: title || String(postId) });
+      void sendImNotification('post', { userId: authUser.userId, postId, postTitle: title || String(postId) });
       return successResponse({ id: postId }, '帖子创建成功', String(postId));
     } catch (err) {
       console.error('[POST /api/posts supabase]', err);
@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
 
     await client.query('COMMIT');
 
-    void sendNotification('post', { userId: authUser.userId, postId, postTitle: title || String(postId) });
+    void sendImNotification('post', { userId: authUser.userId, postId, postTitle: title || String(postId) });
     return successResponse({ id: postId }, '帖子创建成功', String(postId));
   } catch (err) {
     await client.query('ROLLBACK');

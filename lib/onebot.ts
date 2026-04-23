@@ -1,10 +1,3 @@
-/**
- * OneBot HTTP 正向调用封装
- * 支持私聊（send_private_msg）和群消息（send_group_msg）
- * 目标 QQ 号 / 群号均支持多个（英文逗号分隔）
- * 所有发送操作均为 fire-and-forget，失败静默，不抛出异常
- */
-
 import pool, { DB_TYPE } from './db';
 import { getSupabaseClient } from './supabase';
 import { getRedis, REDIS_TYPE } from './redis';
@@ -20,15 +13,25 @@ export interface OnebotConfig {
   enabled: boolean;
   http_url: string;
   access_token: string;
-  target_qq: string;       // 英文逗号分隔的 QQ 号列表
-  target_group: string;    // 英文逗号分隔的群号列表
+  target_qq: string;
+  target_group: string;
   notify_on_like: boolean;
   notify_on_comment: boolean;
   notify_on_post: boolean;
-  email_threshold: number; // 0 表示不启用
+  email_threshold: number;
 }
 
-// ─── 缓存 ────────────────────────────────────────────────────────────────────
+export type NotificationType = 'like' | 'comment' | 'post' | 'email_threshold';
+
+export interface NotificationPayload {
+  userId?: number | string;
+  username?: string;
+  postId?: number | string;
+  postTitle?: string;
+  content?: string;
+  count?: number;
+  threshold?: number;
+}
 
 async function cacheGet(): Promise<OnebotConfig | null> {
   try {
@@ -51,7 +54,6 @@ async function cacheSet(cfg: OnebotConfig): Promise<void> {
       await (redis as Redis).set(CACHE_KEY, value, 'EX', CACHE_TTL);
     }
   } catch {
-    // 缓存写失败不影响主流程
   }
 }
 
@@ -60,11 +62,8 @@ export async function invalidateOnebotCache(): Promise<void> {
     const redis = getRedis();
     await redis.del(CACHE_KEY);
   } catch {
-    // ignore
   }
 }
-
-// ─── 配置读取 ─────────────────────────────────────────────────────────────────
 
 export async function getOnebotConfig(): Promise<OnebotConfig | null> {
   const cached = await cacheGet();
@@ -96,8 +95,6 @@ export async function getOnebotConfig(): Promise<OnebotConfig | null> {
     return null;
   }
 }
-
-// ─── HTTP 调用 ────────────────────────────────────────────────────────────────
 
 async function callOnebot(
   httpUrl: string,
@@ -144,8 +141,6 @@ async function sendGroupMsg(
   });
 }
 
-// ─── 解析多目标 ───────────────────────────────────────────────────────────────
-
 function parseTargets(raw: string): string[] {
   return raw
     .split(',')
@@ -153,9 +148,7 @@ function parseTargets(raw: string): string[] {
     .filter(s => s.length > 0);
 }
 
-// ─── 消息文本构建 ──────────────────────────────────────────────────────────────
-
-async function buildMessage(
+export async function buildNotificationMessage(
   type: NotificationType,
   payload: NotificationPayload
 ): Promise<string> {
@@ -176,18 +169,25 @@ async function buildMessage(
   }
 }
 
-// ─── 统一发送入口 ──────────────────────────────────────────────────────────────
+export async function sendOnebotMessage(
+  cfg: OnebotConfig,
+  type: NotificationType,
+  payload: NotificationPayload
+): Promise<void> {
+  if (!cfg.enabled || !cfg.http_url) return;
+  if (type === 'like' && !cfg.notify_on_like) return;
+  if (type === 'comment' && !cfg.notify_on_comment) return;
+  if (type === 'post' && !cfg.notify_on_post) return;
+  if (type === 'email_threshold' && cfg.email_threshold <= 0) return;
 
-export type NotificationType = 'like' | 'comment' | 'post' | 'email_threshold';
+  const message = await buildNotificationMessage(type, payload);
+  const qqTargets = parseTargets(cfg.target_qq);
+  const groupTargets = parseTargets(cfg.target_group);
 
-export interface NotificationPayload {
-  userId?: number | string;
-  username?: string;
-  postId?: number | string;
-  postTitle?: string;
-  content?: string;    // 评论内容，截断后传入
-  count?: number;      // 邮件发送量
-  threshold?: number;  // 邮件阈值
+  await Promise.allSettled([
+    ...qqTargets.map(qq => sendPrivateMsg(cfg, qq, message)),
+    ...groupTargets.map(gid => sendGroupMsg(cfg, gid, message)),
+  ]);
 }
 
 export async function sendNotification(
@@ -196,28 +196,13 @@ export async function sendNotification(
 ): Promise<void> {
   try {
     const cfg = await getOnebotConfig();
-    if (!cfg || !cfg.enabled || !cfg.http_url) return;
-
-    // 按事件类型检查开关
-    if (type === 'like' && !cfg.notify_on_like) return;
-    if (type === 'comment' && !cfg.notify_on_comment) return;
-    if (type === 'post' && !cfg.notify_on_post) return;
-    if (type === 'email_threshold' && cfg.email_threshold <= 0) return;
-
-    const message = await buildMessage(type, payload);
-    const qqTargets = parseTargets(cfg.target_qq);
-    const groupTargets = parseTargets(cfg.target_group);
-
-    await Promise.allSettled([
-      ...qqTargets.map(qq => sendPrivateMsg(cfg, qq, message)),
-      ...groupTargets.map(gid => sendGroupMsg(cfg, gid, message)),
-    ]);
+    if (!cfg) return;
+    await sendOnebotMessage(cfg, type, payload);
   } catch (e) {
     console.error('[OneBot] sendNotification error:', e);
   }
 }
 
-/** 发送测试消息（用于管理员界面验证配置） */
 export async function sendTestNotification(cfg: OnebotConfig): Promise<{ ok: boolean; error?: string }> {
   try {
     if (!cfg.http_url) return { ok: false, error: 'HTTP 地址不能为空' };
