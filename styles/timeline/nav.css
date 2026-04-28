@@ -127,6 +127,9 @@
 .hero-tag-link    { top: 68px; right: 28px; }
 
 /* ---------- Mobile nav adjustments ---------- */
+@media (max-width: 768px) {
+  .side-nav { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+}
 @media (max-width: 480px) {
   .hero-back        { top: 16px; left: 16px; padding: 6px 10px; }
   .hero-sort-toggle { top: 16px; right: 16px; padding: 6px 10px; }

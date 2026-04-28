@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Noto_Serif_SC, Zhi_Mang_Xing } from "next/font/google";
 import "./globals.css";
 import SiteTopNav from "@/components/ui/common/SiteTopNav";
+import PublicBottomNav from "@/components/ui/common/PublicBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <SiteTopNav />
+        <PublicBottomNav />
         {children}
       </body>
     </html>

@@ -139,6 +139,13 @@
   .login-eye-icon { transition: none; }
 }
 
+/* ---------- Mobile: reserve space for bottom nav ---------- */
+@media (max-width: 768px) {
+  .login-bottom {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ---------- Mobile ≤480px ---------- */
 @media (max-width: 480px) {
   .login-center          { padding: 0 16px; }

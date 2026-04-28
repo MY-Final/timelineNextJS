@@ -197,3 +197,8 @@
   .avatarName { display: none; }
   .avatarBtn { padding: 5px 8px 5px 5px; }
 }
+
+/* ── Hide on mobile (bottom nav replaces it) ── */
+@media (max-width: 768px) {
+  .nav { display: none; }
+}

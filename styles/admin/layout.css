@@ -271,67 +271,23 @@
   color: var(--pk-700);
 }
 
-/* ---------- Mobile: hamburger sidebar ---------- */
+/* ---------- Mobile: sidebar hidden, bottom nav replaces ---------- */
 @media (max-width: 768px) {
-  /* Sidebar: off-screen by default, slide in when open */
-  .admin-sidebar {
-    width: 260px;
-    transform: translateX(-100%);
-    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 100;
-  }
-  .admin-sidebar.open {
-    transform: translateX(0);
-  }
-
-  /* Show all sidebar text when open */
-  .admin-sidebar.open .admin-brand-text,
-  .admin-sidebar.open .admin-nav-section,
-  .admin-sidebar.open .admin-nav-item span,
-  .admin-sidebar.open .admin-user-meta,
-  .admin-sidebar.open .admin-logout-btn span,
-  .admin-sidebar.open .admin-back-btn span,
-  .admin-sidebar.open .admin-back-ext { display: inline; }
-
-  /* Backdrop overlay */
-  .admin-sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 99;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(2px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.28s;
-  }
-  .admin-sidebar-backdrop.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  /* Sidebar completely hidden — bottom nav provides navigation */
+  .admin-sidebar { display: none; }
+  .admin-sidebar-backdrop { display: none; }
+  .admin-hamburger { display: none; }
 
   /* Main: full width, no margin */
   .admin-main { margin-left: 0; }
 
-  /* Header: smaller, with hamburger */
+  /* Header: smaller */
   .admin-header { padding: 0 12px; min-height: 48px; gap: 8px; }
-  .admin-content { padding: 14px 12px; }
-
-  /* Hamburger button */
-  .admin-hamburger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-soft);
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background var(--t-fast), color var(--t-fast);
+  .admin-content {
+    padding: 14px 12px;
+    /* Reserve space for bottom nav */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
-  .admin-hamburger:hover { background: rgba(212, 92, 128, 0.08); color: var(--pk-600); }
 
   /* Breadcrumb compact */
   .admin-breadcrumb-link { display: none; }

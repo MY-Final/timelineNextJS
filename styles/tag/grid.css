@@ -159,8 +159,8 @@
   .tag-grid      { gap: 20px; }
   .tag-event-content { padding: 16px; }
   .tag-event-title   { font-size: 16px; }
-  /* 底部计数器上移，避免与 SiteTopNav 右下角重叠 */
-  .tag-footer    { bottom: 80px; }
+  /* 底部计数器上移，避免与底部导航栏重叠 */
+  .tag-footer    { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 }
 
 @media (max-width: 480px) {

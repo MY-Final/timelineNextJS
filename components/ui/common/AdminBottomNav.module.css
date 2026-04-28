@@ -1,0 +1,269 @@
+/* AdminBottomNav.module.css — Admin mobile bottom navigation bar + drawer */
+
+.nav {
+  display: none; /* Hidden on desktop */
+}
+
+.overlay {
+  display: none;
+}
+
+.drawer {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* ── Bottom nav bar ── */
+  .nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 300;
+    justify-content: space-around;
+    align-items: center;
+    padding: 6px 0;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 248, 251, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(230, 190, 205, 0.50);
+    box-shadow: 0 -4px 24px rgba(180, 60, 90, 0.06);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Tab item ── */
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 64px;
+    min-height: 48px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    text-decoration: none;
+    color: var(--text-muted, #b07090);
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tab:active {
+    transform: scale(0.95);
+  }
+
+  .iconWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+  }
+
+  .indicator {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--pk-500, #d45c80);
+  }
+
+  .label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+
+  .active {
+    color: var(--pk-600, #b03060);
+  }
+
+  /* ── Overlay ── */
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 290;
+    background: rgba(0, 0, 0, 0.30);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: fadeIn 0.18s ease;
+  }
+
+  /* ── Drawer ── */
+  .drawer {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 295;
+    background: var(--surface-modal, rgba(255, 248, 252, 0.97));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-modal, rgba(230, 190, 210, 0.55));
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 36px rgba(80, 20, 40, 0.14);
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+  }
+
+  .drawerOpen {
+    transform: translateY(0);
+  }
+
+  .drawerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border-soft, rgba(230, 190, 205, 0.35));
+  }
+
+  .drawerTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-heading, #5a2038);
+  }
+
+  .drawerClose {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #b07090);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+  }
+  .drawerClose:hover {
+    background: rgba(176, 48, 96, 0.08);
+    color: var(--pk-600, #b03060);
+  }
+
+  .drawerList {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    gap: 2px;
+  }
+
+  .drawerItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-base, #3d1a28);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    min-height: 44px;
+  }
+  .drawerItem:hover {
+    background: rgba(176, 48, 96, 0.06);
+    color: var(--pk-600, #b03060);
+  }
+  .drawerItemActive {
+    color: var(--pk-600, #b03060);
+    background: rgba(176, 48, 96, 0.08);
+  }
+
+  .drawerDivider {
+    height: 1px;
+    background: var(--border-soft, rgba(230, 190, 205, 0.35));
+    margin: 6px 14px;
+  }
+
+  .drawerItemDanger {
+    color: #c03050;
+  }
+  .drawerItemDanger:hover {
+    background: rgba(200, 40, 60, 0.08);
+    color: #d02040;
+  }
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+  @media (max-width: 768px) {
+    .nav {
+      background: rgba(20, 10, 16, 0.92);
+      border-top-color: rgba(100, 40, 60, 0.40);
+    }
+    .tab {
+      color: var(--text-muted, #a07090);
+    }
+    .active {
+      color: var(--pk-400, #e07098);
+    }
+    .indicator {
+      background: var(--pk-400, #e07098);
+    }
+    .drawer {
+      background: var(--surface-modal, rgba(25, 12, 18, 0.97));
+      border-top-color: var(--border-modal, rgba(100, 40, 60, 0.40));
+    }
+    .drawerHeader {
+      border-bottom-color: var(--border-soft, rgba(100, 40, 60, 0.25));
+    }
+    .drawerItem {
+      color: var(--text-base, #f0dde5);
+    }
+    .drawerItem:hover,
+    .drawerItemActive {
+      background: rgba(224, 112, 152, 0.10);
+      color: var(--pk-400, #e07098);
+    }
+    .drawerDivider {
+      background: var(--border-soft, rgba(100, 40, 60, 0.25));
+    }
+    .drawerItemDanger {
+      color: #e06070;
+    }
+    .drawerItemDanger:hover {
+      background: rgba(224, 96, 112, 0.10);
+      color: #f07080;
+    }
+  }
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+  .tab:active {
+    transform: none;
+  }
+  .drawer {
+    transition: none;
+  }
+  .overlay {
+    animation: none;
+  }
+}
