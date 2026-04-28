@@ -79,7 +79,7 @@ export default function PublicBottomNav() {
             aria-current={active ? "page" : undefined}
           >
             <span className={styles.iconWrap}>
-              <Icon size={20} strokeWidth={active ? 2 : 1.5} aria-hidden="true" />
+              <Icon size={20} strokeWidth={active ? 2 : 1.5} aria-hidden />
               {active && <span className={styles.indicator} aria-hidden="true" />}
             </span>
             <span className={styles.label}>{tab.label}</span>
