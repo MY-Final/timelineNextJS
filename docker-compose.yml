@@ -27,6 +27,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data          # 持久化数据目录
       - ./db:/docker-entrypoint-initdb.d                # 首次启动时自动执行 db/ 下的 SQL 文件（按文件名排序）
+      - ./db/functions:/docker-entrypoint-initdb.d/functions  # 子目录挂载，供 99_functions_and_seed.sql 中 \i 引用
     ports:
       - "5432:5432"   # 暴露端口，便于本地工具连接；生产环境可移除
     healthcheck:
