@@ -186,6 +186,20 @@
     color: var(--pk-600, #b03060);
     background: rgba(176, 48, 96, 0.08);
   }
+
+  .drawerDivider {
+    height: 1px;
+    background: var(--border-soft, rgba(230, 190, 205, 0.35));
+    margin: 6px 14px;
+  }
+
+  .drawerItemDanger {
+    color: #c03050;
+  }
+  .drawerItemDanger:hover {
+    background: rgba(200, 40, 60, 0.08);
+    color: #d02040;
+  }
 }
 
 /* ── Dark mode ── */
@@ -218,6 +232,16 @@
     .drawerItemActive {
       background: rgba(224, 112, 152, 0.10);
       color: var(--pk-400, #e07098);
+    }
+    .drawerDivider {
+      background: var(--border-soft, rgba(100, 40, 60, 0.25));
+    }
+    .drawerItemDanger {
+      color: #e06070;
+    }
+    .drawerItemDanger:hover {
+      background: rgba(224, 96, 112, 0.10);
+      color: #f07080;
     }
   }
 }

@@ -1,73 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Home, LayoutDashboard, Tag, User } from "lucide-react";
-import { getStoredUser, isAdmin, type StoredUser } from "@/lib/auth-role";
+import { BookOpen, Home, Tag, User } from "lucide-react";
+import { getStoredUser } from "@/lib/auth-role";
 import styles from "./PublicBottomNav.module.css";
 
-interface TabItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean }>;
-  exact: boolean;
-}
-
-const PUBLIC_TABS: TabItem[] = [
+const TABS = [
   { label: "首页", href: "/", icon: Home, exact: true },
   { label: "故事", href: "/timeline", icon: BookOpen, exact: false },
   { label: "标签", href: "/tags", icon: Tag, exact: false },
 ];
 
-const ADMIN_TABS: TabItem[] = [
-  { label: "控制台", href: "/admin", icon: LayoutDashboard, exact: true },
-  { label: "文章", href: "/admin/posts", icon: BookOpen, exact: false },
-];
-
-function useCurrentUser() {
-  const [user, setUser] = useState<StoredUser | null>(null);
-
-  const sync = useCallback(() => {
-    setUser(getStoredUser());
-  }, []);
-
-  useEffect(() => {
-    sync();
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
-  }, [sync]);
-
-  return user;
-}
-
 export default function PublicBottomNav() {
   const pathname = usePathname();
-  const user = useCurrentUser();
   const [mounted, setMounted] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    setLoggedIn(!!getStoredUser());
+    const sync = () => setLoggedIn(!!getStoredUser());
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
   }, []);
 
   if (!mounted) return null;
+  // 后台页面由 AdminBottomNav 独立处理
+  if (pathname.startsWith("/admin")) return null;
 
-  const isAdminPath = pathname.startsWith("/admin");
-  const admin = user && isAdmin();
-  const mainTabs = isAdminPath ? ADMIN_TABS : PUBLIC_TABS;
-
-  // "我的" tab
-  const profileHref = admin ? "/admin" : user ? "/login?tab=change" : "/login";
-  const profileLabel = user ? "我的" : "登录";
+  const profileHref = loggedIn ? "/login?tab=change" : "/login";
+  const profileLabel = loggedIn ? "我的" : "登录";
 
   function isActive(href: string, exact: boolean) {
-    if (exact) return pathname === href;
-    return pathname.startsWith(href);
+    return exact ? pathname === href : pathname.startsWith(href);
   }
 
   return (
     <nav className={styles.nav} aria-label="底部导航">
-      {mainTabs.map((tab) => {
+      {TABS.map((tab) => {
         const active = isActive(tab.href, tab.exact);
         const Icon = tab.icon;
         return (
@@ -87,7 +59,7 @@ export default function PublicBottomNav() {
         );
       })}
 
-      {/* 我的 / 登录 */}
+      {/* 登录 / 我的 */}
       <Link
         href={profileHref}
         className={`${styles.tab}${pathname === "/login" ? ` ${styles.active}` : ""}`}
@@ -95,7 +67,7 @@ export default function PublicBottomNav() {
         aria-current={pathname === "/login" ? "page" : undefined}
       >
         <span className={styles.iconWrap}>
-          <User size={20} strokeWidth={pathname === "/login" ? 2 : 1.5} aria-hidden="true" />
+          <User size={20} strokeWidth={pathname === "/login" ? 2 : 1.5} aria-hidden />
           {pathname === "/login" && <span className={styles.indicator} aria-hidden="true" />}
         </span>
         <span className={styles.label}>{profileLabel}</span>

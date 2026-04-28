@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, MessageSquare, MoreHorizontal, Users, Mail, Bot, Settings, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  LayoutDashboard, FileText, MessageSquare, MoreHorizontal,
+  Users, Mail, Bot, Settings, X, ArrowLeft, LogOut,
+} from "lucide-react";
 import styles from "./AdminBottomNav.module.css";
 import { getStoredUser, type StoredUser } from "@/lib/auth-role";
 
@@ -31,6 +34,7 @@ const HIDDEN_PATHS = ["/admin/posts/new"];
 
 export default function AdminBottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [user, setUser] = useState<StoredUser | null>(null);
@@ -52,6 +56,15 @@ export default function AdminBottomNav() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [drawerOpen]);
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      localStorage.removeItem("user");
+      router.push("/login");
+    }
+  }
 
   if (!mounted) return null;
   if (!pathname.startsWith("/admin")) return null;
@@ -108,6 +121,27 @@ export default function AdminBottomNav() {
               </Link>
             );
           })}
+
+          {/* 分割线 */}
+          <div className={styles.drawerDivider} />
+
+          {/* 返回前台 */}
+          <Link
+            href="/"
+            className={styles.drawerItem}
+          >
+            <ArrowLeft size={18} strokeWidth={1.8} aria-hidden="true" />
+            <span>返回前台</span>
+          </Link>
+
+          {/* 登出 */}
+          <button
+            className={`${styles.drawerItem} ${styles.drawerItemDanger}`}
+            onClick={handleLogout}
+          >
+            <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
+            <span>登出</span>
+          </button>
         </div>
       </div>
 
