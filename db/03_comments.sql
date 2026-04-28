@@ -1,14 +1,15 @@
 -- 评论表（支持楼中楼：parent_id 指向同表上级评论）
 CREATE TABLE IF NOT EXISTS comments (
-    id          BIGSERIAL       PRIMARY KEY,
-    post_id     BIGINT          NOT NULL REFERENCES posts (id) ON DELETE CASCADE,
-    user_id     BIGINT          NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    parent_id   BIGINT          DEFAULT NULL REFERENCES comments (id) ON DELETE CASCADE, -- NULL 表示一级评论
-    content     TEXT            NOT NULL,
-    like_count  INT             NOT NULL DEFAULT 0,
-    status      VARCHAR(20)     NOT NULL DEFAULT 'visible',  -- visible / hidden / deleted
-    created_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+    id                BIGSERIAL       PRIMARY KEY,
+    post_id           BIGINT          NOT NULL REFERENCES posts (id) ON DELETE CASCADE,
+    user_id           BIGINT          NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    parent_id         BIGINT          DEFAULT NULL REFERENCES comments (id) ON DELETE CASCADE, -- NULL 表示一级评论
+    reply_to_user_id  BIGINT          DEFAULT NULL REFERENCES users (id) ON DELETE SET NULL,   -- 回复目标用户
+    content           TEXT            NOT NULL,
+    like_count        INT             NOT NULL DEFAULT 0,
+    status            VARCHAR(20)     NOT NULL DEFAULT 'visible',  -- visible / hidden / deleted
+    created_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 ALTER TABLE comments
