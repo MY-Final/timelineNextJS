@@ -2,12 +2,19 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 
+# 使用阿里云 apk 镜像源（国内加速）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 COPY package.json package-lock.json* ./
-RUN npm ci --frozen-lockfile
+# 使用淘宝 npm 镜像源加速依赖安装
+RUN npm ci --frozen-lockfile --registry=https://registry.npmmirror.com
 
 # ─── Stage 2: 构建 ───────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 WORKDIR /app
+
+# 使用阿里云 apk 镜像源（国内加速）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
