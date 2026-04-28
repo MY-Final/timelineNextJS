@@ -178,6 +178,13 @@
   .home-cta       { padding: 10px 20px; font-size: 11px; }
 }
 
+/* ---------- Mobile: reserve space for bottom nav ---------- */
+@media (max-width: 768px) {
+  .home-bottom {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ---------- Safe-area / notch 兼容 ---------- */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .home-shell {
