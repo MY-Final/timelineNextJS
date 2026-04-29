@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Heart, KeyRound, Lock, LogIn, Mail, User, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Heart, KeyRound, Lock, LogIn, Mail, User, UserPlus, ArrowLeft } from "lucide-react";
 import "@/styles/Login.css";
 
 type Mode = "login" | "forgot" | "change" | "register";
@@ -21,40 +21,26 @@ interface PasswordFieldProps {
 function PasswordField({ id, label, placeholder, autoComplete, value, onChange, show, onToggle }: PasswordFieldProps) {
   return (
     <div className="login-field">
-      <label className="login-label" htmlFor={id}>
-        {label}
-      </label>
+      <label className="login-label" htmlFor={id}>{label}</label>
       <div className="login-input-wrap">
         <Lock className="login-input-icon" size={15} strokeWidth={1.8} aria-hidden="true" />
         <input
-          id={id}
-          className="login-input"
+          id={id} className="login-input"
           type={show ? "text" : "password"}
           placeholder={placeholder}
           autoComplete={autoComplete ?? "current-password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={value} onChange={(e) => onChange(e.target.value)}
         />
-        <button
-          type="button"
-          className={`login-eye-btn ${show ? "login-eye-btn--visible" : ""}`}
-          onClick={onToggle}
-          aria-label={show ? "隐藏密码" : "显示密码"}
-          aria-pressed={show}
-        >
-          <span className="login-eye-icon login-eye-icon--show">
-            <Eye size={15} strokeWidth={1.8} />
-          </span>
-          <span className="login-eye-icon login-eye-icon--hide">
-            <EyeOff size={15} strokeWidth={1.8} />
-          </span>
+        <button type="button" className={`login-eye-btn${show ? " login-eye-btn--visible" : ""}`}
+          onClick={onToggle} aria-label={show ? "隐藏密码" : "显示密码"} aria-pressed={show}>
+          <span className="login-eye-icon login-eye-icon--show"><Eye size={15} strokeWidth={1.8} /></span>
+          <span className="login-eye-icon login-eye-icon--hide"><EyeOff size={15} strokeWidth={1.8} /></span>
         </button>
       </div>
     </div>
   );
 }
 
-// ── 验证码发送组件 ────────────────────────────────────
 function CodeField({ email, purpose, value, onChange }: {
   email: string; purpose: "register" | "reset";
   value: string; onChange: (v: string) => void;
@@ -106,6 +92,14 @@ function CodeField({ email, purpose, value, onChange }: {
   );
 }
 
+const TITLES: Record<Mode, string> = { login: "欢迎回来", register: "创建账号", forgot: "找回密码", change: "修改密码" };
+const SUBTITLES: Record<Mode, string> = {
+  login: "请登录以继续查看我们的故事",
+  register: "注册账号，记录我们的每一天",
+  forgot: "通过邮箱验证码重置密码",
+  change: "请验证身份并设置新密码",
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,7 +109,6 @@ export default function LoginPage() {
     tabParam && validModes.includes(tabParam) ? tabParam : "login"
   );
 
-  // 如果 URL tab 参数变化（如从导航栏跳转）也要同步
   useEffect(() => {
     if (tabParam && validModes.includes(tabParam)) setMode(tabParam);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,11 +118,9 @@ export default function LoginPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // 登录表单
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // 注册表单
   const [regUsername, setRegUsername] = useState("");
   const [regNickname, setRegNickname] = useState("");
   const [regEmail, setRegEmail] = useState("");
@@ -137,21 +128,17 @@ export default function LoginPage() {
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [regCode, setRegCode] = useState("");
 
-  // 修改密码表单
   const [changeUsername, setChangeUsername] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // 找回密码表单
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotCode, setForgotCode] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
-  // keep legacy unused state to avoid reference errors below
   const [forgotUsername] = useState("");
 
-  // 全局提示
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -210,7 +197,7 @@ export default function LoginPage() {
     e.preventDefault(); setError("");
     if (!forgotEmail || !forgotCode || !forgotNewPassword || !forgotConfirmPassword) { setError("所有字段均为必填"); return; }
     if (forgotNewPassword !== forgotConfirmPassword) { setError("两次密码不一致"); return; }
-    if (forgotNewPassword.length < 6) { setError("新密码不能少于 6 位"); return; }
+    if (forgotNewPassword.length < 6) { setError("密码不能少于 6 位"); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/reset-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: forgotEmail, code: forgotCode, newPassword: forgotNewPassword }) });
@@ -220,14 +207,7 @@ export default function LoginPage() {
     } catch { setError("网络异常，请稍后重试"); } finally { setLoading(false); }
   }
 
-  const TITLES: Record<Mode, string> = { login: "欢迎回来", register: "创建账号", forgot: "找回密码", change: "修改密码" };
-  const SUBTITLES: Record<Mode, string> = {
-    login: "请登录以继续查看我们的故事",
-    register: "注册账号，记录我们的每一天",
-    forgot: "通过邮箱验证码重置密码",
-    change: "请验证身份并设置新密码",
-  };
-  void forgotUsername; // suppress unused warning
+  void forgotUsername;
 
   return (
     <main className="login-shell">
@@ -235,20 +215,17 @@ export default function LoginPage() {
       <div className="login-orb login-orb-2" aria-hidden="true" />
       <div className="login-orb login-orb-3" aria-hidden="true" />
 
-      <div className="login-top">
-        <div className="login-date-badge">
-          <div className="login-badge-line" />
-          <p className="login-badge-text">Our Story</p>
-        </div>
-      </div>
-
-      <div className="login-center">
+      <div className="login-card-wrap">
+        {/* Heart icon */}
         <div className="login-icon-wrap" aria-hidden="true">
-          <Heart className="login-heart-icon" size={28} fill="currentColor" strokeWidth={0} />
+          <Heart className="login-heart-icon" size={24} fill="currentColor" strokeWidth={0} />
         </div>
-        <p className="login-title">{TITLES[mode]}</p>
+
+        {/* Title */}
+        <h1 className="login-title">{TITLES[mode]}</h1>
         <p className="login-subtitle">{SUBTITLES[mode]}</p>
 
+        {/* Card */}
         <div className="login-card">
           {/* ── LOGIN ── */}
           {mode === "login" && (
@@ -273,8 +250,6 @@ export default function LoginPage() {
                 <button type="button" className="login-link" onClick={() => switchMode("register")}>注册账号</button>
                 <span className="login-link-sep" aria-hidden="true">·</span>
                 <button type="button" className="login-link" onClick={() => switchMode("forgot")}>忘记密码</button>
-                <span className="login-link-sep" aria-hidden="true">·</span>
-                <button type="button" className="login-link" onClick={() => switchMode("change")}>修改密码</button>
               </div>
             </form>
           )}
@@ -318,7 +293,9 @@ export default function LoginPage() {
                 <UserPlus size={15} strokeWidth={1.8} aria-hidden="true" />{loading ? "注册中…" : "注册"}
               </button>
               <div className="login-links">
-                <button type="button" className="login-link" onClick={() => switchMode("login")}>已有账号？去登录</button>
+                <button type="button" className="login-link login-link--back" onClick={() => switchMode("login")}>
+                  <ArrowLeft size={13} strokeWidth={1.8} />返回登录
+                </button>
               </div>
             </form>
           )}
@@ -344,7 +321,9 @@ export default function LoginPage() {
                 <KeyRound size={15} strokeWidth={1.8} aria-hidden="true" />{loading ? "提交中…" : "重置密码"}
               </button>
               <div className="login-links">
-                <button type="button" className="login-link" onClick={() => switchMode("login")}>返回登录</button>
+                <button type="button" className="login-link login-link--back" onClick={() => switchMode("login")}>
+                  <ArrowLeft size={13} strokeWidth={1.8} />返回登录
+                </button>
               </div>
             </form>
           )}
@@ -372,18 +351,16 @@ export default function LoginPage() {
                 <KeyRound size={15} strokeWidth={1.8} aria-hidden="true" />{loading ? "提交中…" : "确认修改"}
               </button>
               <div className="login-links">
-                <button type="button" className="login-link" onClick={() => switchMode("login")}>返回登录</button>
+                <button type="button" className="login-link login-link--back" onClick={() => switchMode("login")}>
+                  <ArrowLeft size={13} strokeWidth={1.8} />返回登录
+                </button>
               </div>
             </form>
           )}
         </div>
-      </div>
 
-      <div className="login-bottom">
-        <div className="login-tagline">
-          <p className="login-tagline-text">每一天都值得被记住</p>
-          <div className="login-tagline-line" />
-        </div>
+        {/* Footer */}
+        <p className="login-footer">每一天都值得被记住</p>
       </div>
     </main>
   );

@@ -16,11 +16,11 @@
     align-items: center;
     padding: 6px 0;
     padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 248, 251, 0.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(200, 130, 160, 0.25);
-    box-shadow: 0 -4px 24px rgba(180, 60, 90, 0.06);
+    background: rgba(253, 244, 247, 0.96);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(200, 130, 160, 0.30);
+    box-shadow: 0 -2px 12px rgba(180, 60, 90, 0.08);
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -85,8 +85,8 @@
 @media (prefers-color-scheme: dark) {
   @media (max-width: 768px) {
     .nav {
-      background: rgba(20, 10, 16, 0.90);
-      border-top-color: rgba(159, 18, 57, 0.30);
+      background: rgba(19, 13, 16, 0.96);
+      border-top-color: rgba(100, 40, 60, 0.30);
     }
     .tab {
       color: #8a5068;

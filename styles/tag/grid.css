@@ -170,6 +170,9 @@
 }
 
 /* Safe-area / notch */
+/* Reserve space for bottom nav */
+.tag-shell { padding-bottom: 80px; }
+
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .tag-shell { padding-bottom: env(safe-area-inset-bottom); }
+  .tag-shell { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 }

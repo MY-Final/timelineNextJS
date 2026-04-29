@@ -13,7 +13,7 @@
   font-family: var(--sans, system-ui, sans-serif);
   color: var(--text-base);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* ---------- Floating orbs ---------- */
@@ -285,8 +285,8 @@
   .admin-header { padding: 0 12px; min-height: 48px; gap: 8px; }
   .admin-content {
     padding: 14px 12px;
-    /* Reserve space for bottom nav */
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    /* Reserve space for bottom nav — nav ≈ 60px + safe-area, add comfortable margin */
+    padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Breadcrumb compact */

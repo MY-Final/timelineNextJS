@@ -445,7 +445,7 @@
 /* ── Mobile responsive ── */
 @media (max-width: 768px) {
   /* Content padding */
-  .admin-content { padding: 14px 12px; }
+  .admin-content { padding-top: 14px; padding-inline: 12px; }
 
   /* Stats cards stack tighter */
   .admin-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
