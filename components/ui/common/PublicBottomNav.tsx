@@ -30,7 +30,7 @@ export default function PublicBottomNav() {
   // 后台页面由 AdminBottomNav 独立处理
   if (pathname.startsWith("/admin")) return null;
 
-  const profileHref = loggedIn ? "/login?tab=change" : "/login";
+  const profileHref = loggedIn ? "/profile" : "/login";
   const profileLabel = loggedIn ? "我的" : "登录";
 
   function isActive(href: string, exact: boolean) {
@@ -62,13 +62,13 @@ export default function PublicBottomNav() {
       {/* 登录 / 我的 */}
       <Link
         href={profileHref}
-        className={`${styles.tab}${pathname === "/login" ? ` ${styles.active}` : ""}`}
+        className={`${styles.tab}${pathname === "/login" || pathname.startsWith("/profile") ? ` ${styles.active}` : ""}`}
         aria-label={profileLabel}
-        aria-current={pathname === "/login" ? "page" : undefined}
+        aria-current={pathname === "/login" || pathname.startsWith("/profile") ? "page" : undefined}
       >
         <span className={styles.iconWrap}>
-          <User size={20} strokeWidth={pathname === "/login" ? 2 : 1.5} aria-hidden />
-          {pathname === "/login" && <span className={styles.indicator} aria-hidden="true" />}
+          <User size={20} strokeWidth={pathname === "/login" || pathname.startsWith("/profile") ? 2 : 1.5} aria-hidden />
+          {(pathname === "/login" || pathname.startsWith("/profile")) && <span className={styles.indicator} aria-hidden="true" />}
         </span>
         <span className={styles.label}>{profileLabel}</span>
       </Link>
