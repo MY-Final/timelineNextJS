@@ -26,10 +26,10 @@ AS $$
 BEGIN
   RETURN QUERY
   SELECT
-    c.id, c.post_id, c.parent_id, c.content, c.like_count,
+    c.id, c.post_id, c.parent_id, c.content::text, c.like_count,
     c.status, c.created_at,
-    u.id AS user_id, u.username, u.nickname,
-    p.title AS post_title,
+    u.id AS user_id, u.username::text, u.nickname::text,
+    p.title::text AS post_title,
     COUNT(*) OVER() AS total_count
   FROM comments c
   JOIN users u ON u.id = c.user_id
