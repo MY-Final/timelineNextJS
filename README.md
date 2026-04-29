@@ -11,8 +11,8 @@
 - shadcn/ui 基础能力
 - Framer Motion
 - Lucide React
-- PostgreSQL（Supabase）
-- Redis（Upstash）
+- PostgreSQL（自建 / Supabase）
+- Redis（自建 / Upstash）
 - Cloudflare R2（图片存储）
 
 ## 功能概览
@@ -38,12 +38,24 @@
 
 ## 环境变量
 
-在项目根目录创建 `.env.local`，填写以下变量：
+项目支持两种数据库/Redis 后端，通过 `DB_TYPE` 和 `REDIS_TYPE` 切换。
+
+### 本地开发
+
+复制示例文件并填写：
+
+```bash
+cp .env.example .env.local
+```
 
 ```env
-# 数据库（Supabase）
-DB_TYPE=supabase
-SUPABASE_DB_URL=postgresql://postgres:<密码>@db.<project>.supabase.co:5432/postgres
+# 数据库 —— self-hosted 或 supabase
+DB_TYPE=self-hosted
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=timeline
+DB_PASSWORD=your_password
+DB_NAME=timeline
 
 # JWT
 JWT_SECRET=<至少32位随机字符串>
@@ -56,11 +68,21 @@ R2_SECRET_ACCESS_KEY=
 R2_BUCKET_NAME=
 R2_PUBLIC_URL=
 
-# Redis（Upstash）
-REDIS_TYPE=upstash
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
+# Redis —— self-hosted 或 upstash
+REDIS_TYPE=self-hosted
+REDIS_URL=redis://localhost:6379
 ```
+
+### Docker 部署
+
+Docker 部署使用独立的 `.env.docker`，数据库和 Redis 连接指向容器内部服务名：
+
+```env
+DB_HOST=postgres          # docker-compose 服务名
+REDIS_URL=redis://:redis_pass@redis:6379
+```
+
+其余变量（JWT、R2）与本地开发一致，详见 `.env.example`。
 
 > 注意：密码中含有 `@` 等特殊字符时，需进行 URL 编码（`@` → `%40`）。
 
@@ -100,6 +122,25 @@ npm run build
 npm run start
 ```
 
+## Docker 部署
+
+一键启动应用 + PostgreSQL + Redis：
+
+```bash
+# 编辑 .env.docker，修改 JWT_SECRET 等敏感变量
+docker compose up -d --build
+```
+
+服务说明：
+
+| 服务 | 容器端口 | 宿主机端口 | 说明 |
+|------|----------|------------|------|
+| app | 3000 | 9421 | Next.js 应用 |
+| postgres | 5432 | 5432 | 数据库（可通过工具直连） |
+| redis | 6379 | 6379 | 缓存 |
+
+数据库会在首次启动时自动执行 `db/` 下的建表脚本和种子数据。
+
 ## 项目结构
 
 ```text
@@ -116,7 +157,9 @@ styles/               全局样式与页面样式
 
 ## 数据库初始化
 
-按顺序执行 `db/` 目录下的 SQL 文件：
+Docker 部署时会自动执行，无需手动操作。
+
+本地开发需手动按顺序执行 `db/` 目录下的 SQL 文件：
 
 ```text
 01_users.sql
