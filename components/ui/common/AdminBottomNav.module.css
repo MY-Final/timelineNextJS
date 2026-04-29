@@ -25,9 +25,9 @@
     align-items: center;
     padding: 6px 0;
     padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 248, 251, 0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 248, 251, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-top: 1px solid rgba(230, 190, 205, 0.50);
     box-shadow: 0 -4px 24px rgba(180, 60, 90, 0.06);
     -webkit-tap-highlight-color: transparent;
@@ -206,7 +206,7 @@
 @media (prefers-color-scheme: dark) {
   @media (max-width: 768px) {
     .nav {
-      background: rgba(20, 10, 16, 0.92);
+      background: rgba(20, 10, 16, 0.95);
       border-top-color: rgba(100, 40, 60, 0.40);
     }
     .tab {

@@ -26,7 +26,7 @@
   --surface-panel:   rgba(255, 248, 251, 0.75);
   --surface-card:    rgba(255, 248, 251, 0.80);
   --surface-sidebar: rgba(255, 248, 251, 0.85);
-  --surface-header:  rgba(255, 248, 251, 0.75);
+  --surface-header:  rgba(255, 248, 251, 0.92);
   --surface-modal:   rgba(255, 248, 252, 0.92);
   --surface-input:   rgba(255, 252, 254, 0.80);
   --surface-upload:  rgba(255, 245, 248, 0.50);
@@ -85,7 +85,7 @@
     --surface-panel:   rgba(25, 12, 18, 0.70);
     --surface-card:    rgba(28, 14, 20, 0.70);
     --surface-sidebar: rgba(25, 15, 20, 0.88);
-    --surface-header:  rgba(20, 12, 16, 0.75);
+    --surface-header:  rgba(20, 12, 16, 0.92);
     --surface-modal:   rgba(25, 12, 18, 0.92);
     --surface-input:   rgba(30, 18, 24, 0.80);
     --surface-upload:  rgba(30, 18, 24, 0.40);
